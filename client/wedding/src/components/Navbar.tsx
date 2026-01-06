@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   AppBar,
   Box,
@@ -6,20 +6,19 @@ import {
   IconButton,
   Typography,
   Menu,
-  Container,
   Button,
   MenuItem,
-} from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import { Link, useLocation } from 'react-router-dom';
+} from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
+import { Link, useLocation } from "react-router-dom";
 
 const pages = [
-  { name: 'Home', path: '/' },
-  { name: 'Our Story', path: '/story' },
-  { name: 'Wedding Details', path: '/details' },
-  { name: 'Registry', path: '/registry' },
-  { name: 'RSVP', path: '/rsvp' },
-  { name: 'Photos', path: '/photos' },
+  { name: "Home", path: "/" },
+  { name: "Our Story", path: "/story" },
+  { name: "Wedding Details", path: "/details" },
+  { name: "Registry", path: "/registry" },
+  { name: "RSVP", path: "/rsvp" },
+  { name: "Photos", path: "/photos" },
 ];
 
 export const Navbar = () => {
@@ -36,27 +35,9 @@ export const Navbar = () => {
 
   return (
     <AppBar position="static">
-      <Container maxWidth="xl">
+      <Box sx={{ px: 3, width: "100%" }}>
         <Toolbar disableGutters>
-          <Typography
-            variant="h6"
-            noWrap
-            component={Link}
-            to="/"
-            sx={{
-              mr: 2,
-              display: { xs: 'none', md: 'flex' },
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              letterSpacing: '.3rem',
-              color: 'inherit',
-              textDecoration: 'none',
-            }}
-          >
-            OUR WEDDING
-          </Typography>
-
-          <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
+          <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
             <IconButton
               size="large"
               aria-label="navigation menu"
@@ -71,18 +52,18 @@ export const Navbar = () => {
               id="menu-appbar"
               anchorEl={anchorElNav}
               anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'left',
+                vertical: "bottom",
+                horizontal: "left",
               }}
               keepMounted
               transformOrigin={{
-                vertical: 'top',
-                horizontal: 'left',
+                vertical: "top",
+                horizontal: "left",
               }}
               open={Boolean(anchorElNav)}
               onClose={handleCloseNavMenu}
               sx={{
-                display: { xs: 'block', md: 'none' },
+                display: { xs: "block", md: "none" },
               }}
             >
               {pages.map((page) => (
@@ -106,38 +87,78 @@ export const Navbar = () => {
             to="/"
             sx={{
               mr: 2,
-              display: { xs: 'flex', md: 'none' },
+              display: { xs: "flex", md: "none" },
               flexGrow: 1,
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              letterSpacing: '.3rem',
-              color: 'inherit',
-              textDecoration: 'none',
+              color: "inherit",
+              textDecoration: "none",
+              "&:hover": {
+                color: "inherit",
+              },
             }}
           >
-            OUR WEDDING
+            Kathryn & Nicholas
           </Typography>
 
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            {pages.map((page) => (
-              <Button
-                key={page.name}
-                component={Link}
-                to={page.path}
-                onClick={handleCloseNavMenu}
-                sx={{
-                  my: 2,
-                  color: 'white',
-                  display: 'block',
-                  borderBottom: location.pathname === page.path ? '2px solid white' : 'none',
-                }}
-              >
-                {page.name}
-              </Button>
-            ))}
+          <Box
+            sx={{
+              flexGrow: 1,
+              display: { xs: "none", md: "flex" },
+              flexDirection: "column",
+              justifyItems: "center",
+            }}
+          >
+            <Typography
+              variant="h4"
+              component="h1"
+              sx={{ textAlign: "center" }}
+            >
+              Kathryn & Nicholas
+            </Typography>
+            <Box
+              sx={{
+                flexGrow: 1,
+                display: { xs: "none", md: "flex" },
+                justifyContent: "center",
+              }}
+            >
+              {pages.map((page) => (
+                <Button
+                  key={page.name}
+                  component={Link}
+                  to={page.path}
+                  onClick={handleCloseNavMenu}
+                  sx={{
+                    m: 2,
+                    color: "white",
+                    display: "block",
+                    position: "relative",
+                    borderRadius: 0,
+                    "&::after": {
+                      content: '""',
+                      position: "absolute",
+                      bottom: 0,
+                      left: location.pathname === page.path ? 0 : "50%",
+                      width: location.pathname === page.path ? "100%" : 0,
+                      height: "2px",
+                      backgroundColor: "white",
+                      transition: "width 0.3s ease, left 0.3s ease",
+                    },
+                    "&:hover::after": {
+                      width: "100%",
+                      left: 0,
+                    },
+                    "&:hover": {
+                      backgroundColor: "transparent",
+                    },
+                  }}
+                >
+                  {page.name}
+                </Button>
+              ))}
+            </Box>
           </Box>
         </Toolbar>
-      </Container>
+      </Box>
     </AppBar>
   );
 };

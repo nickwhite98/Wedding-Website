@@ -1,26 +1,76 @@
-import { Container, Box, Typography } from '@mui/material';
+import { Box, Typography, Button } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { CountdownTimer } from "../components/CountdownTimer";
+import { colors } from "../theme";
 
 export const Home = () => {
+  const navigate = useNavigate();
+
   return (
-    <Container maxWidth="lg">
-      <Box
-        sx={{
-          minHeight: '80vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          textAlign: 'center',
-          py: 8,
-        }}
-      >
-        <Typography variant="h2" component="h1" gutterBottom>
-          Welcome to Our Wedding
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        textAlign: "center",
+        backgroundImage: "url(/home.jpg)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        position: "relative",
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.3)",
+          zIndex: 1,
+        },
+      }}
+    >
+      <Box sx={{ position: "relative", zIndex: 2 }}>
+        <Typography
+          variant="h1"
+          component="h1"
+          gutterBottom
+          sx={{
+            color: "white",
+            fontWeight: 700,
+            fontSize: { xs: "3rem", md: "5rem" },
+            textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
+            mb: 4,
+          }}
+        >
+          August 29th, 2026
         </Typography>
-        <Typography variant="h5" color="text.secondary" paragraph>
-          We're so excited to celebrate our special day with you
-        </Typography>
+
+        <CountdownTimer />
+
+        <Button
+          variant="outlined"
+          size="large"
+          onClick={() => navigate("/rsvp")}
+          sx={{
+            fontSize: "1.5rem",
+            padding: "1rem 3rem",
+            backgroundColor: "transparent",
+            color: colors.lightText.primary,
+            borderColor: colors.lightText.primary,
+            borderWidth: "2px",
+            "&:hover": {
+              backgroundColor: "rgba(255, 255, 255, 0.1)",
+              borderColor: colors.lightText.primary,
+            },
+            boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
+          }}
+        >
+          RSVP
+        </Button>
       </Box>
-    </Container>
+    </Box>
   );
 };
