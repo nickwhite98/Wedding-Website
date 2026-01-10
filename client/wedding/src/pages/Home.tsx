@@ -15,7 +15,7 @@ export const Home = () => {
         justifyContent: "center",
         alignItems: "center",
         textAlign: "center",
-        backgroundImage: "url(/home.jpg)",
+        backgroundImage: "url(/homepage.jpeg)",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",

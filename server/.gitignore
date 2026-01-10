@@ -4,3 +4,9 @@ dist
 *.log
 coverage
 .DS_Store
+
+# Prisma
+/src/generated/prisma
+*.db
+*.db-journal
+/prisma/migrations

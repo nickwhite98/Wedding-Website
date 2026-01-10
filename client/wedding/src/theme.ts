@@ -42,40 +42,40 @@ export const colors = {
 
 export const theme = createTheme({
   typography: {
-    fontFamily: "'Libre Baskerville', serif",
+    fontFamily: "'Kabel', sans-serif",
     h1: {
-      fontFamily: "'Cormorant', serif",
-      fontWeight: 700,
+      fontFamily: "'Brightwall', cursive",
+      fontWeight: 400,
       letterSpacing: "0.02em",
     },
     h2: {
-      fontFamily: "'Cormorant', serif",
-      fontWeight: 600,
+      fontFamily: "'Brightwall', cursive",
+      fontWeight: 400,
       letterSpacing: "0.02em",
     },
     h3: {
-      fontFamily: "'Cormorant', serif",
-      fontWeight: 600,
+      fontFamily: "'Brightwall', cursive",
+      fontWeight: 400,
       letterSpacing: "0.02em",
     },
     h4: {
-      fontFamily: "'Cormorant', serif",
-      fontWeight: 600,
+      fontFamily: "'Brightwall', cursive",
+      fontWeight: 400,
       letterSpacing: "0.02em",
     },
     h5: {
-      fontFamily: "'Cormorant', serif",
-      fontWeight: 600,
+      fontFamily: "'Brightwall', cursive",
+      fontWeight: 400,
       letterSpacing: "0.02em",
     },
     h6: {
-      fontFamily: "'Cormorant', serif",
-      fontWeight: 600,
+      fontFamily: "'Brightwall', cursive",
+      fontWeight: 400,
       letterSpacing: "0.02em",
     },
     button: {
-      fontFamily: "'Libre Baskerville', serif",
-      fontWeight: 400,
+      fontFamily: "'Kabel', sans-serif",
+      fontWeight: 500,
     },
   },
   palette: {

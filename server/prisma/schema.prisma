@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Invitation represents a group of guests (e.g., a family or couple)
+model Invitation {
+  id           Int            @id @default(autoincrement())
+  primaryEmail String?
+  address      String?
+  city         String?
+  state        String?
+  zip          String?
+  plusOne      Boolean        @default(false)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  guests       Guest[]
+  rsvpResponses RsvpResponse[]
+}
+
+// Guest represents an individual person within an invitation
+model Guest {
+  id           Int            @id @default(autoincrement())
+  invitationId Int
+  firstName    String
+  lastName     String
+  email        String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  invitation   Invitation     @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  rsvpResponse RsvpResponse?
+
+  @@index([invitationId])
+  @@index([firstName])
+  @@index([lastName])
+}
+
+// RsvpResponse represents the RSVP answer for a specific guest
+model RsvpResponse {
+  id           Int        @id @default(autoincrement())
+  invitationId Int
+  guestId      Int        @unique
+  isAttending  Boolean
+  respondedAt  DateTime   @default(now())
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  guest        Guest      @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  @@index([invitationId])
+}

@@ -34,7 +34,7 @@ export const Navbar = () => {
   };
 
   return (
-    <AppBar position="static">
+    <AppBar position="static" sx={{ backgroundColor: "#ede3d4" }}>
       <Box sx={{ px: 3, width: "100%" }}>
         <Toolbar disableGutters>
           <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
@@ -44,7 +44,7 @@ export const Navbar = () => {
               aria-controls="menu-appbar"
               aria-haspopup="true"
               onClick={handleOpenNavMenu}
-              color="inherit"
+              sx={{ color: "#883d17" }}
             >
               <MenuIcon />
             </IconButton>
@@ -81,7 +81,7 @@ export const Navbar = () => {
           </Box>
 
           <Typography
-            variant="h5"
+            variant="h4"
             noWrap
             component={Link}
             to="/"
@@ -89,10 +89,10 @@ export const Navbar = () => {
               mr: 2,
               display: { xs: "flex", md: "none" },
               flexGrow: 1,
-              color: "inherit",
+              color: "#883d17",
               textDecoration: "none",
               "&:hover": {
-                color: "inherit",
+                color: "#883d17",
               },
             }}
           >
@@ -108,9 +108,8 @@ export const Navbar = () => {
             }}
           >
             <Typography
-              variant="h4"
-              component="h1"
-              sx={{ textAlign: "center" }}
+              variant="h5"
+              sx={{ textAlign: "center", mt: 2, color: "#883d17" }}
             >
               Kathryn & Nicholas
             </Typography>
@@ -129,7 +128,7 @@ export const Navbar = () => {
                   onClick={handleCloseNavMenu}
                   sx={{
                     m: 2,
-                    color: "white",
+                    color: "#883d17",
                     display: "block",
                     position: "relative",
                     borderRadius: 0,
@@ -140,7 +139,7 @@ export const Navbar = () => {
                       left: location.pathname === page.path ? 0 : "50%",
                       width: location.pathname === page.path ? "100%" : 0,
                       height: "2px",
-                      backgroundColor: "white",
+                      backgroundColor: "#883d17",
                       transition: "width 0.3s ease, left 0.3s ease",
                     },
                     "&:hover::after": {
