@@ -8,7 +8,7 @@ A wedding website built with React (Vite + TypeScript + MUI) frontend and Expres
 
 ## Tech Stack
 
-### Frontend (`/client/wedding`)
+### Frontend (`/client`)
 
 - **Framework**: React 19 with Vite
 - **Language**: TypeScript (strict mode)
