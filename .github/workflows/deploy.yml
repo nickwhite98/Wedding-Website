@@ -83,6 +83,7 @@ jobs:
             client/dist \
             server/dist \
             server/node_modules \
+            server/generated \
             server/package*.json \
             server/prisma \
             server/prisma.config.ts \
