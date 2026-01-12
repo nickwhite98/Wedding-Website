@@ -4,7 +4,7 @@ import { AppError } from '../middleware/errorHandler';
 
 export class GuestController {
   // GET /api/guests
-  async getAll(req: Request, res: Response, next: NextFunction) {
+  async getAll(_req: Request, res: Response, next: NextFunction) {
     try {
       const guests = await guestService.getAllGuests();
       res.json({
@@ -28,7 +28,7 @@ export class GuestController {
 
       // Group by invitation to avoid duplicates
       const uniqueInvitations = new Map();
-      guests.forEach((guest) => {
+      guests.forEach((guest: any) => {
         if (guest.invitation && !uniqueInvitations.has(guest.invitation.id)) {
           uniqueInvitations.set(guest.invitation.id, guest.invitation);
         }

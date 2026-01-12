@@ -44,8 +44,8 @@ export class GuestService {
     return await prisma.guest.findMany({
       where: {
         OR: [
-          { firstName: { contains: searchTerm, mode: 'insensitive' } },
-          { lastName: { contains: searchTerm, mode: 'insensitive' } },
+          { firstName: { contains: searchTerm } },
+          { lastName: { contains: searchTerm } },
         ],
       },
       include: {

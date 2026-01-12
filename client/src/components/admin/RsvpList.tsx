@@ -13,7 +13,6 @@ import {
   Alert,
   Card,
   CardContent,
-  Grid,
 } from "@mui/material";
 import { colors } from "../../theme";
 
@@ -101,40 +100,40 @@ export const RsvpList = () => {
     <Box>
       {/* Stats Cards */}
       {stats && (
-        <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2, mb: 4 }}>
+          <Box>
             <Card sx={{ backgroundColor: colors.sage, color: "white" }}>
               <CardContent>
                 <Typography variant="h4">{stats.totalInvitations}</Typography>
                 <Typography variant="body2">Total Invitations</Typography>
               </CardContent>
             </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          </Box>
+          <Box>
             <Card sx={{ backgroundColor: colors.eucalyptus, color: "white" }}>
               <CardContent>
                 <Typography variant="h4">{stats.respondedInvitations}</Typography>
                 <Typography variant="body2">Responded</Typography>
               </CardContent>
             </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          </Box>
+          <Box>
             <Card sx={{ backgroundColor: colors.terracotta, color: "white" }}>
               <CardContent>
                 <Typography variant="h4">{stats.attendingCount}</Typography>
                 <Typography variant="body2">Attending</Typography>
               </CardContent>
             </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          </Box>
+          <Box>
             <Card sx={{ backgroundColor: colors.dustyRose, color: "white" }}>
               <CardContent>
                 <Typography variant="h4">{stats.notAttendingCount}</Typography>
                 <Typography variant="body2">Not Attending</Typography>
               </CardContent>
             </Card>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       )}
 
       <Typography variant="h5" sx={{ mb: 2, color: colors.cognac }}>

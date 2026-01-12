@@ -4,7 +4,7 @@ import { AppError } from '../middleware/errorHandler';
 
 export class InvitationController {
   // GET /api/invitations
-  async getAll(req: Request, res: Response, next: NextFunction) {
+  async getAll(_req: Request, res: Response, next: NextFunction) {
     try {
       const invitations = await invitationService.getAllInvitations();
       res.json({
@@ -17,7 +17,7 @@ export class InvitationController {
   }
 
   // GET /api/invitations/stats
-  async getStats(req: Request, res: Response, next: NextFunction) {
+  async getStats(_req: Request, res: Response, next: NextFunction) {
     try {
       const stats = await invitationService.getInvitationStats();
       res.json({

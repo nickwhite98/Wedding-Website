@@ -1,10 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-}
-
 class ApiService {
   private async request<T>(
     endpoint: string,

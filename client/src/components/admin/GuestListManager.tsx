@@ -24,7 +24,6 @@ import {
   Card,
   CardContent,
   CardActions,
-  Grid,
   MenuItem,
   Select,
   FormControl,
@@ -358,7 +357,6 @@ export const GuestListManager = () => {
   };
 
   const unassignedGuests = filterAndSortGuests(guests.filter((g) => !g.invitationId));
-  const assignedGuests = filterAndSortGuests(guests.filter((g) => g.invitationId));
   const allGuests = filterAndSortGuests(guests);
 
   if (loading) {
@@ -846,9 +844,9 @@ const InvitationCardGrid = ({
   };
 
   return (
-    <Grid container spacing={2}>
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }, gap: 2 }}>
       {invitations.map((invitation) => (
-        <Grid item xs={12} md={6} lg={4} key={invitation.id}>
+        <Box key={invitation.id}>
           <Card
             sx={{
               height: "100%",
@@ -945,8 +943,8 @@ const InvitationCardGrid = ({
               </Button>
             </CardActions>
           </Card>
-        </Grid>
+        </Box>
       ))}
-    </Grid>
+    </Box>
   );
 };

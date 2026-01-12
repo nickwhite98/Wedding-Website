@@ -25,7 +25,7 @@ export class ImportController {
   }
 
   // GET /api/import/unassigned
-  async getUnassignedGuests(req: Request, res: Response, next: NextFunction) {
+  async getUnassignedGuests(_req: Request, res: Response, next: NextFunction) {
     try {
       const guests = await importService.getUnassignedGuests();
       res.json({
