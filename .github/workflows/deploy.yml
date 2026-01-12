@@ -37,7 +37,7 @@ jobs:
 
       - name: Install backend dependencies
         working-directory: ./server
-        run: npm ci --production
+        run: npm ci
 
       - name: Generate Prisma Client
         working-directory: ./server
