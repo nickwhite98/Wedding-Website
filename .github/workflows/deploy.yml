@@ -54,14 +54,21 @@ jobs:
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
-          printf "%s" "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          echo "$SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          echo "Verifying SSH key format..."
+          ssh-keygen -l -f ~/.ssh/id_rsa || {
+            echo "Invalid SSH key format!"
+            exit 1
+          }
           echo "Scanning SSH host: ${{ secrets.EC2_HOST }}"
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts || {
             echo "ssh-keyscan failed. Checking EC2_HOST value..."
             echo "EC2_HOST is set: ${{ secrets.EC2_HOST != '' }}"
             exit 1
           }
+        env:
+          SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
 
       - name: Create deployment package
         run: |
