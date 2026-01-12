@@ -18,8 +18,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: |
             client/package-lock.json
             server/package-lock.json
@@ -37,7 +37,7 @@ jobs:
 
       - name: Install backend dependencies
         working-directory: ./server
-        run: npm ci
+        run: npm ci --production
 
       - name: Generate Prisma Client
         working-directory: ./server
@@ -73,15 +73,19 @@ jobs:
       - name: Create deployment package
         run: |
           tar -czf deployment.tar.gz \
-            --exclude=node_modules \
             --exclude=.git \
             --exclude=*.db \
-            --exclude=dist \
             --exclude=.env \
-            --exclude=client/dist \
-            --exclude=server/dist \
             --exclude=.github \
-            . || [[ $? -eq 1 ]]
+            --exclude=client/node_modules \
+            --exclude=client/src \
+            --exclude=server/src \
+            client/dist \
+            server/dist \
+            server/node_modules \
+            server/package*.json \
+            server/prisma \
+            || [[ $? -eq 1 ]]
 
       - name: Copy files to EC2
         run: |
@@ -114,33 +118,39 @@ jobs:
             # Navigate to deployment directory
             cd current
 
-            # Build and restart services
-            docker-compose down
-            docker-compose build --no-cache
-            docker-compose up -d
+            # Run database migrations
+            cd server
+            npx prisma migrate deploy
+            cd ..
 
-            # Wait for services to be healthy
-            echo "Waiting for services to start..."
-            sleep 10
+            # Restart PM2 processes
+            pm2 restart wedding-backend || pm2 start server/dist/index.js --name wedding-backend --node-args="--env-file=.env"
+            
+            # Wait for backend to be ready
+            echo "Waiting for backend to start..."
+            sleep 5
 
             # Health check
-            if curl -f http://localhost/health; then
-              echo "Deployment successful!"
+            if curl -f http://localhost:3000/health 2>/dev/null; then
+              echo "Backend deployment successful!"
             else
-              echo "Health check failed, rolling back..."
+              echo "Backend health check failed, rolling back..."
               cd /var/www/wedding
-              docker-compose down
-              if [ -d "backup_$(ls -t | grep backup_ | head -1)" ]; then
+              if [ -d "$(ls -dt backup_* 2>/dev/null | head -1)" ]; then
+                latest_backup=$(ls -dt backup_* | head -1)
+                pm2 stop wedding-backend
                 mv current failed_$(date +%Y%m%d_%H%M%S)
-                mv backup_$(ls -t | grep backup_ | head -1) current
-                cd current
-                docker-compose up -d
+                mv $latest_backup current
+                cd current/server
+                pm2 restart wedding-backend
               fi
               exit 1
             fi
 
-            # Cleanup old Docker images
-            docker image prune -af
+            # Save PM2 process list
+            pm2 save
+
+            echo "✅ Deployment successful!"
           ENDSSH
 
       - name: Deployment notification
