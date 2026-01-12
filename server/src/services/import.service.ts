@@ -113,7 +113,7 @@ export class ImportService {
               },
             });
             invitationId = invitation.id;
-            invitationMap.set(addressKey, invitationId);
+            invitationMap.set(addressKey, invitationId as number);
             results.invitationsCreated++;
           }
         }
