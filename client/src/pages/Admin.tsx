@@ -12,6 +12,7 @@ import {
 import { PasswordPrompt } from "../components/PasswordPrompt";
 import { RsvpList } from "../components/admin/RsvpList";
 import { GuestListManager } from "../components/admin/GuestListManager";
+import { CsvImporter } from "../components/admin/CsvImporter";
 import { colors } from "../theme";
 
 interface TabPanelProps {
@@ -139,6 +140,7 @@ export const Admin = () => {
         >
           <Tab label="RSVPs" />
           <Tab label="Guest List" />
+          <Tab label="Import CSV" />
           <Tab label="Photos" />
         </Tabs>
 
@@ -151,6 +153,10 @@ export const Admin = () => {
         </TabPanel>
 
         <TabPanel value={currentTab} index={2}>
+          <CsvImporter />
+        </TabPanel>
+
+        <TabPanel value={currentTab} index={3}>
           <Typography variant="h5" sx={{ mb: 2, color: colors.cognac }}>
             Photo Management
           </Typography>

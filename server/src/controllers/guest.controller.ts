@@ -116,6 +116,25 @@ export class GuestController {
       next(error);
     }
   }
+
+  // POST /api/guests/bulk-delete
+  async bulkDelete(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { guestIds } = req.body as { guestIds: number[] };
+
+      if (!guestIds || !Array.isArray(guestIds) || guestIds.length === 0) {
+        throw new AppError('Guest IDs array is required', 400);
+      }
+
+      await guestService.bulkDeleteGuests(guestIds);
+      res.json({
+        success: true,
+        message: `${guestIds.length} guest(s) deleted successfully`,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default new GuestController();

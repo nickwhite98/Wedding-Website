@@ -1,0 +1,7 @@
+WEDDING GUEST NAME(S),ADDRESS 1,ADDRESS 2,CITY,STATE/ PROVINCE,COUNTRY,ZIP CODE,EMAIL ADDRESS,PHONE NUMBER,SAVE THE DATE SENT?,INVITE SENT?,RSVP,# OF GUESTS,TABLE NUMBER,MENU CHOICE,DIETARY RESTRICTIONS,NOTES
+John Smith,123 Main St,,Springfield,IL,USA,62701,john@example.com,555-0101,Yes,No,,,,,Vegetarian,Close friend
+Mary Smith,123 Main St,,Springfield,IL,USA,62701,mary@example.com,555-0101,Yes,No,,,,,None,John's wife
+Jane Doe,456 Oak Ave,Apt 2B,Chicago,IL,USA,60601,jane@example.com,555-0102,Yes,No,,,,,Gluten-free,College roommate
+Bob Johnson,789 Pine Rd,,Peoria,IL,USA,61602,bob@example.com,555-0103,No,No,,,,,None,Work colleague
+Sarah Johnson,789 Pine Rd,,Peoria,IL,USA,61602,sarah@example.com,555-0103,No,No,,,,,Vegetarian,Bob's wife
+Alice Williams,321 Elm St,,Rockford,IL,USA,61101,alice@example.com,555-0104,Yes,Yes,,,,,Vegan,Family friend

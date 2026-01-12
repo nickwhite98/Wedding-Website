@@ -97,6 +97,15 @@ export class GuestService {
       where: { id },
     });
   }
+
+  // Bulk delete guests
+  async bulkDeleteGuests(guestIds: number[]) {
+    return await prisma.guest.deleteMany({
+      where: {
+        id: { in: guestIds },
+      },
+    });
+  }
 }
 
 export default new GuestService();

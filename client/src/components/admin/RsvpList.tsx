@@ -33,7 +33,6 @@ interface RsvpResponse {
 
 interface Invitation {
   id: number;
-  primaryEmail?: string;
   plusOne: boolean;
   guests: (Guest & { rsvpResponse?: RsvpResponse })[];
   rsvpResponses: RsvpResponse[];
@@ -164,7 +163,7 @@ export const RsvpList = () => {
                         {guest.firstName} {guest.lastName}
                       </TableCell>
                       <TableCell>
-                        {guest.email || invitation.primaryEmail || "-"}
+                        {guest.email || "-"}
                       </TableCell>
                       <TableCell>
                         <Chip

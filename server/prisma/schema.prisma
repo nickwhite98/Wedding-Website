@@ -12,15 +12,21 @@ datasource db {
 
 // Invitation represents a group of guests (e.g., a family or couple)
 model Invitation {
-  id           Int            @id @default(autoincrement())
-  primaryEmail String?
-  address      String?
-  city         String?
-  state        String?
-  zip          String?
-  plusOne      Boolean        @default(false)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id               Int            @id @default(autoincrement())
+  address          String?
+  address2         String?
+  city             String?
+  state            String?
+  zip              String?
+  country          String?
+  phoneNumber      String?
+  saveTheDateSent  Boolean        @default(false)
+  inviteSent       Boolean        @default(false)
+  tableNumber      Int?
+  notes            String?
+  plusOne          Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 
   guests       Guest[]
   rsvpResponses RsvpResponse[]
@@ -28,15 +34,17 @@ model Invitation {
 
 // Guest represents an individual person within an invitation
 model Guest {
-  id           Int            @id @default(autoincrement())
-  invitationId Int
-  firstName    String
-  lastName     String
-  email        String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id                  Int            @id @default(autoincrement())
+  invitationId        Int?
+  firstName           String
+  lastName            String
+  email               String?
+  menuChoice          String?
+  dietaryRestrictions String?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 
-  invitation   Invitation     @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  invitation   Invitation?    @relation(fields: [invitationId], references: [id], onDelete: Cascade)
   rsvpResponse RsvpResponse?
 
   @@index([invitationId])
