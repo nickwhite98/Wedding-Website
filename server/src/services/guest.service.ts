@@ -1,5 +1,5 @@
 import prisma from '../config/database';
-import { Prisma } from '../generated/prisma';
+import { Prisma } from '../../generated/prisma';
 
 export class GuestService {
   // Get all guests
@@ -43,10 +43,7 @@ export class GuestService {
   async searchGuestsByName(searchTerm: string) {
     return await prisma.guest.findMany({
       where: {
-        OR: [
-          { firstName: { contains: searchTerm } },
-          { lastName: { contains: searchTerm } },
-        ],
+        OR: [{ firstName: { contains: searchTerm } }, { lastName: { contains: searchTerm } }],
       },
       include: {
         invitation: {

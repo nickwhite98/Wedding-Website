@@ -1,5 +1,5 @@
 import prisma from '../config/database';
-import { Prisma } from '../generated/prisma';
+import { Prisma } from '../../generated/prisma';
 
 export class InvitationService {
   // Get all invitations with their guests

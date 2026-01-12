@@ -1,5 +1,5 @@
 import prisma from '../config/database';
-import { Prisma } from '../generated/prisma';
+import { Prisma } from '../../generated/prisma';
 
 export interface CsvRow {
   guestName: string;
@@ -47,7 +47,9 @@ export class ImportService {
   private parseBoolean(value?: string): boolean {
     if (!value) return false;
     const normalized = value.toLowerCase().trim();
-    return normalized === 'yes' || normalized === 'true' || normalized === 'y' || normalized === '1';
+    return (
+      normalized === 'yes' || normalized === 'true' || normalized === 'y' || normalized === '1'
+    );
   }
 
   /**
@@ -151,15 +153,17 @@ export class ImportService {
   /**
    * Bulk create guests (for direct API calls)
    */
-  async bulkCreateGuests(guests: Array<{
-    firstName: string;
-    lastName: string;
-    email?: string;
-    dietaryRestrictions?: string;
-    menuChoice?: string;
-  }>) {
+  async bulkCreateGuests(
+    guests: Array<{
+      firstName: string;
+      lastName: string;
+      email?: string;
+      dietaryRestrictions?: string;
+      menuChoice?: string;
+    }>
+  ) {
     return await prisma.guest.createMany({
-      data: guests.map(guest => ({
+      data: guests.map((guest) => ({
         ...guest,
         invitationId: null,
       })),
@@ -174,10 +178,7 @@ export class ImportService {
       where: {
         invitationId: null,
       },
-      orderBy: [
-        { lastName: 'asc' },
-        { firstName: 'asc' },
-      ],
+      orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
     });
   }
 
