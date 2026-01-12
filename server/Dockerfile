@@ -10,8 +10,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies
-RUN npm ci --only=production && \
+# Install ALL dependencies (including devDependencies for building)
+RUN npm ci && \
     npm cache clean --force
 
 # Copy source code
@@ -22,6 +22,10 @@ RUN npx prisma generate
 
 # Build TypeScript
 RUN npm run build
+
+# Install only production dependencies for final image
+RUN npm ci --only=production && \
+    npm cache clean --force
 
 # Production stage
 FROM node:20-alpine AS production
