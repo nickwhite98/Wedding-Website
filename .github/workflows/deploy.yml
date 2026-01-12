@@ -112,26 +112,27 @@ jobs:
             tar -xzf /tmp/deployment.tar.gz -C current/
             rm /tmp/deployment.tar.gz
 
-            # Copy production environment file
-            cp .env.production current/.env
+            # Copy production environment file to server directory
+            cp .env.production current/server/.env
 
             # Navigate to deployment directory
-            cd current
+            cd current/server
 
             # Run database migrations
-            cd server
             npx prisma migrate deploy
-            cd ..
 
-            # Restart PM2 processes
-            pm2 restart wedding-backend || pm2 start server/dist/index.js --name wedding-backend --node-args="--env-file=.env"
+            # Navigate back to root
+            cd /var/www/wedding/current
+
+            # Restart PM2 processes (using full path to .env)
+            pm2 restart wedding-backend || pm2 start server/dist/index.js --name wedding-backend --node-args="--env-file=server/.env"
             
             # Wait for backend to be ready
             echo "Waiting for backend to start..."
             sleep 5
 
-            # Health check
-            if curl -f http://localhost:3000/health 2>/dev/null; then
+            # Health check (port 3001, not 3000!)
+            if curl -f http://localhost:3001/health 2>/dev/null; then
               echo "Backend deployment successful!"
             else
               echo "Backend health check failed, rolling back..."
@@ -141,7 +142,7 @@ jobs:
                 pm2 stop wedding-backend
                 mv current failed_$(date +%Y%m%d_%H%M%S)
                 mv $latest_backup current
-                cd current/server
+                cd current
                 pm2 restart wedding-backend
               fi
               exit 1
@@ -152,12 +153,3 @@ jobs:
 
             echo "✅ Deployment successful!"
           ENDSSH
-
-      - name: Deployment notification
-        if: always()
-        run: |
-          if [ ${{ job.status }} == 'success' ]; then
-            echo "✅ Deployment successful!"
-          else
-            echo "❌ Deployment failed!"
-          fi
