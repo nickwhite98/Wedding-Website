@@ -118,7 +118,8 @@ jobs:
             # Navigate to deployment directory
             cd current/server
 
-            # Run database migrations
+            # Load DATABASE_URL and run migrations
+            export DATABASE_URL="file:/var/www/wedding/data/prod.db"
             npx prisma migrate deploy
 
             # Navigate back to root
