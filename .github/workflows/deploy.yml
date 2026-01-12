@@ -71,7 +71,10 @@ jobs:
             --exclude=*.db \
             --exclude=dist \
             --exclude=.env \
-            .
+            --exclude=client/dist \
+            --exclude=server/dist \
+            --exclude=.github \
+            . || [[ $? -eq 1 ]]
 
       - name: Copy files to EC2
         run: |
