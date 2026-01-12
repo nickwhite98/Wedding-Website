@@ -83,7 +83,6 @@ jobs:
             client/dist \
             server/dist \
             server/node_modules \
-            server/generated \
             server/package*.json \
             server/prisma \
             server/prisma.config.ts \
@@ -119,6 +118,7 @@ jobs:
 
             # Navigate to deployment directory
             cd current/server
+            npx prisma generate
 
             # Load environment variables and run migrations
             set -a
