@@ -39,10 +39,6 @@ jobs:
         working-directory: ./server
         run: npm ci
 
-      - name: Generate Prisma Client
-        working-directory: ./server
-        run: npx prisma generate
-
       - name: Build backend
         working-directory: ./server
         run: npm run build
@@ -80,6 +76,7 @@ jobs:
             --exclude=client/node_modules \
             --exclude=client/src \
             --exclude=server/src \
+            --exclude=server/generated \
             client/dist \
             server/dist \
             server/node_modules \
