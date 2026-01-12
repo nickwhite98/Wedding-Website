@@ -85,6 +85,7 @@ jobs:
             server/node_modules \
             server/package*.json \
             server/prisma \
+            server/prisma.config.ts \
             || [[ $? -eq 1 ]]
 
       - name: Copy files to EC2
@@ -118,8 +119,10 @@ jobs:
             # Navigate to deployment directory
             cd current/server
 
-            # Load DATABASE_URL and run migrations
-            export DATABASE_URL="file:/var/www/wedding/data/prod.db"
+            # Load environment variables and run migrations
+            set -a
+            source .env
+            set +a
             npx prisma migrate deploy
 
             # Navigate back to root
