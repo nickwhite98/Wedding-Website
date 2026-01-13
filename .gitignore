@@ -45,6 +45,7 @@ pnpm-debug.log*
 
 # Prisma
 server/src/generated/
+server/generated/
 
 # Docker
 .dockerignore

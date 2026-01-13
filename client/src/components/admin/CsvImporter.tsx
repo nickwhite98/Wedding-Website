@@ -13,6 +13,8 @@ import {
 import { Upload as UploadIcon } from "@mui/icons-material";
 import { colors } from "../../theme";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
 interface ImportResult {
   success: Array<{
     rowNumber: number;
@@ -47,7 +49,7 @@ export const CsvImporter = () => {
       const text = await file.text();
       const rows = parseCsv(text);
 
-      const response = await fetch("http://localhost:3001/api/import/guests", {
+      const response = await fetch(`${API_BASE_URL}/import/guests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rows }),
@@ -138,7 +140,7 @@ export const CsvImporter = () => {
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 2, color: colors.cognac }}>
+      <Typography variant="h5" sx={{ mb: 2, color: colors.heading }}>
         Import Guests from CSV
       </Typography>
 
@@ -220,7 +222,7 @@ export const CsvImporter = () => {
 
           {result.success.length > 0 && (
             <Paper sx={{ p: 2, mb: 2, backgroundColor: colors.cream }}>
-              <Typography variant="h6" sx={{ mb: 1, color: colors.cognac }}>
+              <Typography variant="h6" sx={{ mb: 1, color: colors.heading }}>
                 Imported Guests
               </Typography>
               <List dense>

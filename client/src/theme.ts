@@ -3,27 +3,31 @@ import { createTheme } from "@mui/material/styles";
 // Earthy Elegant Color Palette
 export const colors = {
   // Primary earthy tones
-  sage: "#9CAF88", // Sage green
-  olive: "#b79966bb", // Olive
-  eucalyptus: "#8BA899", // Eucalyptus
-  terracotta: "#C17854", // Terracotta
+  sage: "#A4B494", // Sage green - soft muted green
+  olive: "#5d6239", // Olive - for buttons
+  eucalyptus: "#7A9A8A", // Eucalyptus - gray-green
+  terracotta: "#C67B5C", // Terracotta - warm rust-orange
 
   // Warm neutrals
-  camel: "#D4A574", // Camel
-  mushroom: "#B8A593", // Mushroom taupe
-  cream: "#F5EFE7", // Cream
-  warmIvory: "#EAE0D5", // Warm ivory
+  camel: "#CAB49C", // Camel - from PDF hex codes
+  mushroom: "#B5A898", // Mushroom taupe
+  cream: "#f6f4f0", // Cream - warm off-white background
+  warmIvory: "#ede3d4", // Warm ivory - matches navbar background
 
   // Accent colors
-  dustyRose: "#D4A5A5", // Dusty rose
-  burntSienna: "#B85C38", // Burnt sienna
-  cognac: "#6B3E26", // Cognac brown
-  softNavy: "#3D4F5C", // Soft warm navy
+  dustyRose: "#C9A9A6", // Dusty rose - muted pink
+  burntSienna: "#A65D3F", // Burnt sienna - rich rust
+  cognac: "#8A6240", // Cognac - warm brown (accent use only)
+
+  // Text colors - unified warm rust
+  heading: "#883d17", // Warm rust - for headings
+  body: "#883d17", // Warm rust - for body text
+  bodyLight: "#883d17", // Warm rust - for secondary text
 
   // Additional neutrals
-  goldenSand: "#E6BE8A", // Golden sand
-  oatmeal: "#C9A66B", // Oatmeal
-  bronze: "#4A5F4F", // Bronze green
+  goldenSand: "#D9C4A5", // Golden sand
+  oatmeal: "#C9B896", // Oatmeal
+  bronze: "#6B7A5C", // Bronze green - lighter for hover
 
   // Light text (for dark backgrounds)
   lightText: {
@@ -34,9 +38,9 @@ export const colors = {
 
   // Dark text (for light backgrounds)
   darkText: {
-    primary: "#6B3E26", // Cognac brown
-    secondary: "#3D4F5C", // Soft navy
-    tertiary: "#8B7355", // Muted brown
+    primary: "#883d17", // Warm rust
+    secondary: "#883d17", // Warm rust
+    tertiary: "#883d17", // Warm rust
   },
 };
 
@@ -81,8 +85,8 @@ export const theme = createTheme({
   palette: {
     primary: {
       main: colors.olive,
-      light: colors.eucalyptus,
-      dark: colors.olive,
+      light: colors.sage,
+      dark: colors.bronze,
       contrastText: "#ffffff",
     },
     secondary: {
@@ -93,11 +97,11 @@ export const theme = createTheme({
     },
     background: {
       default: colors.cream,
-      paper: "#ffffff",
+      paper: colors.warmIvory,
     },
     text: {
-      primary: colors.cognac,
-      secondary: colors.softNavy,
+      primary: "#883d17",
+      secondary: "#883d17",
     },
   },
   components: {
@@ -122,14 +126,15 @@ export const theme = createTheme({
         root: {
           "&.Mui-selected": {
             backgroundColor: colors.sage,
-            color: "#ffffff",
+            color: colors.heading,
             "&:hover": {
               backgroundColor: colors.olive,
+              color: colors.heading,
             },
           },
           "&:hover": {
             backgroundColor: colors.eucalyptus,
-            color: "#ffffff",
+            color: colors.heading,
           },
         },
       },

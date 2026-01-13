@@ -59,7 +59,7 @@ export const PasswordPrompt = ({
       <DialogTitle
         sx={{
           fontFamily: "'Brightwall', cursive",
-          color: colors.cognac,
+          color: colors.heading,
           textAlign: "center",
         }}
       >
@@ -69,7 +69,7 @@ export const PasswordPrompt = ({
         <DialogContent>
           <Typography
             variant="body2"
-            sx={{ mb: 2, textAlign: "center", color: colors.softNavy }}
+            sx={{ mb: 2, textAlign: "center", color: colors.body }}
           >
             Enter the admin password to continue
           </Typography>
@@ -95,7 +95,7 @@ export const PasswordPrompt = ({
           <Button
             onClick={handleClose}
             sx={{
-              color: colors.softNavy,
+              color: colors.body,
               "&:hover": {
                 backgroundColor: "rgba(61, 79, 92, 0.1)",
               },

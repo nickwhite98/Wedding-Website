@@ -50,26 +50,28 @@ export const Home = () => {
 
         <CountdownTimer />
 
-        <Button
-          variant="outlined"
-          size="large"
-          onClick={() => navigate("/rsvp")}
-          sx={{
-            fontSize: "1.5rem",
-            padding: "1rem 3rem",
-            backgroundColor: "transparent",
-            color: colors.lightText.primary,
-            borderColor: colors.lightText.primary,
-            borderWidth: "2px",
-            "&:hover": {
-              backgroundColor: "rgba(255, 255, 255, 0.1)",
+        {false && (
+          <Button
+            variant="outlined"
+            size="large"
+            onClick={() => navigate("/rsvp")}
+            sx={{
+              fontSize: "1.5rem",
+              padding: "1rem 3rem",
+              backgroundColor: "transparent",
+              color: colors.lightText.primary,
               borderColor: colors.lightText.primary,
-            },
-            boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
-          }}
-        >
-          RSVP
-        </Button>
+              borderWidth: "2px",
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+                borderColor: colors.lightText.primary,
+              },
+              boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
+            }}
+          >
+            RSVP
+          </Button>
+        )}
       </Box>
     </Box>
   );

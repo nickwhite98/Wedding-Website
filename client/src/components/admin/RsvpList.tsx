@@ -16,6 +16,8 @@ import {
 } from "@mui/material";
 import { colors } from "../../theme";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
 interface Guest {
   id: number;
   firstName: string;
@@ -60,8 +62,8 @@ export const RsvpList = () => {
     try {
       setLoading(true);
       const [invitationsRes, statsRes] = await Promise.all([
-        fetch("http://localhost:3001/api/invitations"),
-        fetch("http://localhost:3001/api/invitations/stats"),
+        fetch(`${API_BASE_URL}/invitations`),
+        fetch(`${API_BASE_URL}/invitations/stats`),
       ]);
 
       if (!invitationsRes.ok || !statsRes.ok) {
@@ -136,7 +138,7 @@ export const RsvpList = () => {
         </Box>
       )}
 
-      <Typography variant="h5" sx={{ mb: 2, color: colors.cognac }}>
+      <Typography variant="h5" sx={{ mb: 2, color: colors.heading }}>
         RSVP Responses ({respondedInvitations.length})
       </Typography>
 

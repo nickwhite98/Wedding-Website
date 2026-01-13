@@ -6,6 +6,8 @@ import { Layout } from "./components/Layout";
 import { Home } from "./pages/Home";
 import { Story } from "./pages/Story";
 import { Details } from "./pages/Details";
+import { Travel } from "./pages/Travel";
+import { Venue } from "./pages/Venue";
 import { Registry } from "./pages/Registry";
 import { RSVP } from "./pages/RSVP";
 import { Photos } from "./pages/Photos";
@@ -34,9 +36,12 @@ const AppContent = () => {
       <Layout>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/travel" element={<Travel />} />
+          <Route path="/venue" element={<Venue />} />
+          <Route path="/registry" element={<Registry />} />
+          {/* Hidden routes - not in nav but still accessible */}
           <Route path="/story" element={<Story />} />
           <Route path="/details" element={<Details />} />
-          <Route path="/registry" element={<Registry />} />
           <Route path="/rsvp" element={<RSVP />} />
           <Route path="/photos" element={<Photos />} />
           <Route path="/admin" element={<Admin />} />

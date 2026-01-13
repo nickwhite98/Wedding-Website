@@ -14,11 +14,9 @@ import { Link, useLocation } from "react-router-dom";
 
 const pages = [
   { name: "Home", path: "/" },
-  { name: "Our Story", path: "/story" },
-  { name: "Wedding Details", path: "/details" },
+  { name: "Travel", path: "/travel" },
+  { name: "Venue", path: "/venue" },
   { name: "Registry", path: "/registry" },
-  { name: "RSVP", path: "/rsvp" },
-  { name: "Photos", path: "/photos" },
 ];
 
 export const Navbar = () => {
@@ -150,6 +148,7 @@ export const Navbar = () => {
                     },
                     "&:hover": {
                       backgroundColor: "transparent",
+                      color: "#883d17",
                     },
                   }}
                 >

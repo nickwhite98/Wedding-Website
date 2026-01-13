@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Box, Typography } from '@mui/material';
-import { colors } from '../theme';
+import { useState, useEffect } from "react";
+import { Box, Typography } from "@mui/material";
+import { colors } from "../theme";
 
 interface TimeLeft {
   days: number;
@@ -11,7 +11,7 @@ interface TimeLeft {
 
 export const CountdownTimer = () => {
   const calculateTimeLeft = (): TimeLeft => {
-    const weddingDate = new Date('2026-08-29T00:00:00').getTime();
+    const weddingDate = new Date("2026-08-29T00:00:00").getTime();
     const now = new Date().getTime();
     const difference = weddingDate - now;
 
@@ -40,9 +40,9 @@ export const CountdownTimer = () => {
   const TimeUnit = ({ value, label }: { value: number; label: string }) => (
     <Box
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
         mx: { xs: 1, md: 2 },
       }}
     >
@@ -51,10 +51,10 @@ export const CountdownTimer = () => {
         sx={{
           color: colors.lightText.primary,
           fontWeight: 700,
-          fontSize: { xs: '2rem', md: '3rem' },
-          textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
-          minWidth: { xs: '50px', md: '70px' },
-          textAlign: 'center',
+          fontSize: { xs: "2rem", md: "3rem" },
+          textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
+          minWidth: { xs: "50px", md: "70px" },
+          textAlign: "center",
         }}
       >
         {value}
@@ -63,10 +63,10 @@ export const CountdownTimer = () => {
         variant="body1"
         sx={{
           color: colors.lightText.secondary,
-          fontSize: { xs: '0.875rem', md: '1rem' },
-          textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.1em',
+          fontSize: { xs: "0.875rem", md: "1rem" },
+          textShadow: "1px 1px 2px rgba(0,0,0,0.5)",
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
         }}
       >
         {label}
@@ -77,9 +77,9 @@ export const CountdownTimer = () => {
   return (
     <Box
       sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
         mb: 4,
       }}
     >
@@ -87,7 +87,7 @@ export const CountdownTimer = () => {
       <Typography
         sx={{
           color: colors.lightText.primary,
-          fontSize: { xs: '1.5rem', md: '2rem' },
+          fontSize: { xs: "1.5rem", md: "2rem" },
           mx: 0.5,
         }}
       >
@@ -97,7 +97,7 @@ export const CountdownTimer = () => {
       <Typography
         sx={{
           color: colors.lightText.primary,
-          fontSize: { xs: '1.5rem', md: '2rem' },
+          fontSize: { xs: "1.5rem", md: "2rem" },
           mx: 0.5,
         }}
       >
@@ -107,7 +107,7 @@ export const CountdownTimer = () => {
       <Typography
         sx={{
           color: colors.lightText.primary,
-          fontSize: { xs: '1.5rem', md: '2rem' },
+          fontSize: { xs: "1.5rem", md: "2rem" },
           mx: 0.5,
         }}
       >

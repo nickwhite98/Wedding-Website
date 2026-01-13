@@ -95,7 +95,7 @@ export const Admin = () => {
         <Typography
           variant="h3"
           component="h1"
-          sx={{ color: colors.cognac }}
+          sx={{ color: colors.heading }}
         >
           Admin Dashboard
         </Typography>
@@ -103,8 +103,8 @@ export const Admin = () => {
           variant="outlined"
           onClick={handleLogout}
           sx={{
-            color: colors.cognac,
-            borderColor: colors.cognac,
+            color: colors.heading,
+            borderColor: colors.heading,
             "&:hover": {
               borderColor: colors.burntSienna,
               backgroundColor: "rgba(193, 120, 84, 0.1)",
@@ -128,9 +128,9 @@ export const Admin = () => {
             borderBottom: 1,
             borderColor: "divider",
             "& .MuiTab-root": {
-              color: colors.softNavy,
+              color: colors.body,
               "&.Mui-selected": {
-                color: colors.cognac,
+                color: colors.heading,
               },
             },
             "& .MuiTabs-indicator": {
@@ -157,10 +157,10 @@ export const Admin = () => {
         </TabPanel>
 
         <TabPanel value={currentTab} index={3}>
-          <Typography variant="h5" sx={{ mb: 2, color: colors.cognac }}>
+          <Typography variant="h5" sx={{ mb: 2, color: colors.heading }}>
             Photo Management
           </Typography>
-          <Typography variant="body1" sx={{ color: colors.softNavy }}>
+          <Typography variant="body1" sx={{ color: colors.body }}>
             Photo management coming soon... You'll be able to upload and delete
             photos.
           </Typography>

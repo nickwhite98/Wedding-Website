@@ -39,6 +39,8 @@ import {
 } from "@mui/icons-material";
 import { colors } from "../../theme";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
 interface Guest {
   id: number;
   firstName: string;
@@ -370,7 +372,7 @@ export const GuestListManager = () => {
   return (
     <Box>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h5" sx={{ color: colors.cognac }}>
+        <Typography variant="h5" sx={{ color: colors.heading }}>
           Guest Management ({guests.length} total guests)
         </Typography>
         <Box sx={{ display: "flex", gap: 2 }}>
@@ -460,9 +462,9 @@ export const GuestListManager = () => {
         sx={{
           mb: 2,
           "& .MuiTab-root": {
-            color: colors.softNavy,
+            color: colors.body,
             "&.Mui-selected": {
-              color: colors.cognac,
+              color: colors.heading,
             },
           },
           "& .MuiTabs-indicator": {
@@ -588,7 +590,7 @@ export const GuestListManager = () => {
       >
         <DialogTitle>Create Invitation for Selected Guests</DialogTitle>
         <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2, color: colors.softNavy }}>
+          <Typography variant="body2" sx={{ mb: 2, color: colors.body }}>
             Creating invitation for {selectedGuests.length} guest(s)
           </Typography>
 
@@ -856,7 +858,7 @@ const InvitationCardGrid = ({
             }}
           >
             <CardContent sx={{ flexGrow: 1 }}>
-              <Typography variant="h6" sx={{ mb: 1, color: colors.cognac }}>
+              <Typography variant="h6" sx={{ mb: 1, color: colors.heading }}>
                 Invitation #{invitation.id}
               </Typography>
 
