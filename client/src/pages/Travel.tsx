@@ -69,7 +69,7 @@ export const Travel = () => {
             sx={{
               p: { xs: 3, md: 4 },
               flex: { md: 1 },
-              textAlign: "center",
+              textAlign: "left",
             }}
           >
             <Typography
@@ -77,7 +77,8 @@ export const Travel = () => {
               component="h2"
               sx={{
                 color: colors.heading,
-                mb: 1.5,
+                mb: 2.5,
+                textAlign: "center",
               }}
             >
               Wedding Location
@@ -92,25 +93,27 @@ export const Travel = () => {
               Join us for our celebration at the White family's property,
               located in beautiful northern Michigan near Gaylord.
             </Typography>
-            <Button
-              variant="contained"
-              href={googleMapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              sx={{
-                backgroundColor: colors.olive,
-                color: colors.cream,
-                fontWeight: 600,
-                px: 3,
-                py: 1,
-                "&:hover": {
-                  backgroundColor: colors.bronze,
+            <Box sx={{ textAlign: "center" }}>
+              <Button
+                variant="contained"
+                href={googleMapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
+                  backgroundColor: colors.olive,
                   color: colors.cream,
-                },
-              }}
-            >
-              Get Directions
-            </Button>
+                  fontWeight: 600,
+                  px: 3,
+                  py: 1,
+                  "&:hover": {
+                    backgroundColor: colors.bronze,
+                    color: colors.cream,
+                  },
+                }}
+              >
+                Get Directions
+              </Button>
+            </Box>
           </Box>
 
           {/* Leaflet Map */}
@@ -162,7 +165,7 @@ export const Travel = () => {
             sx={{
               p: { xs: 3, md: 4 },
               flex: { md: 1 },
-              textAlign: "center",
+              textAlign: "left",
             }}
           >
             <Typography
@@ -170,7 +173,8 @@ export const Travel = () => {
               component="h2"
               sx={{
                 color: colors.heading,
-                mb: 2,
+                mb: 2.5,
+                textAlign: "center",
               }}
             >
               Accommodations
