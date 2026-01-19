@@ -4,22 +4,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import { colors } from "../theme";
 import { keyframes } from "@mui/system";
 
-// Gentle floating animations
-const float1 = keyframes`
-  0%, 100% { transform: translateY(0px) rotate(var(--rotation)); }
-  50% { transform: translateY(-8px) rotate(var(--rotation)); }
-`;
-
-const float2 = keyframes`
-  0%, 100% { transform: translateY(0px) rotate(var(--rotation)); }
-  50% { transform: translateY(-12px) rotate(var(--rotation)); }
-`;
-
-const float3 = keyframes`
-  0%, 100% { transform: translateY(-4px) rotate(var(--rotation)); }
-  50% { transform: translateY(4px) rotate(var(--rotation)); }
-`;
-
 const fadeInUp = keyframes`
   from {
     opacity: 0;
@@ -33,134 +17,31 @@ const fadeInUp = keyframes`
 
 const venueImages = [
   { src: "/venue/000085420001.JPEG", alt: "Venue scenery" },
-  { src: "/venue/000085430017 2.JPEG", alt: "Venue landscape" },
+  { src: "/venue/000085430017-2.JPEG", alt: "Venue landscape" },
   { src: "/venue/000085430022.JPEG", alt: "Property view" },
   { src: "/venue/000085430030.JPEG", alt: "Outdoor setting" },
   { src: "/venue/IMG_2873.jpg", alt: "Wedding location" },
   { src: "/venue/IMG_7148.jpg", alt: "Natural surroundings" },
-  { src: "/venue/IMG_8195.jpg", alt: "Family property" },
 ];
-
-// Scrapbook image component with organic styling
-interface ScrapbookImageProps {
-  src: string;
-  alt: string;
-  rotation?: number;
-  size?: "small" | "medium" | "large";
-  floatAnimation?: 1 | 2 | 3;
-  delay?: number;
-  onClick: () => void;
-  float?: "left" | "right" | "none";
-}
-
-const ScrapbookImage = ({
-  src,
-  alt,
-  rotation = 0,
-  size = "medium",
-  floatAnimation = 1,
-  delay = 0,
-  onClick,
-  float = "none",
-}: ScrapbookImageProps) => {
-  const sizeMap = {
-    small: { width: "160px", height: "160px" },
-    medium: { width: "200px", height: "200px" },
-    large: { width: "240px", height: "240px" },
-  };
-
-  const animations = { 1: float1, 2: float2, 3: float3 };
-  const durations = { 1: "6s", 2: "8s", 3: "7s" };
-
-  const floatStyles = float !== "none" ? {
-    float: { xs: "none", md: float },
-    margin: float === "left"
-      ? { xs: "0 auto 1.5rem", md: "0 2rem 1rem 0" }
-      : { xs: "0 auto 1.5rem", md: "0 0 1rem 2rem" },
-    display: { xs: "block", md: "inline" },
-  } : {};
-
-  return (
-    <Box
-      onClick={onClick}
-      sx={{
-        ...sizeMap[size],
-        "--rotation": `${rotation}deg`,
-        position: "relative",
-        cursor: "pointer",
-        animation: `${animations[floatAnimation]} ${durations[floatAnimation]} ease-in-out infinite`,
-        animationDelay: `${delay}s`,
-        transition: "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease",
-        ...floatStyles,
-        "&:hover": {
-          transform: `scale(1.05) rotate(${rotation * 0.5}deg)`,
-          zIndex: 100,
-          "& .image-frame": {
-            boxShadow: "0 25px 50px rgba(0,0,0,0.25)",
-          },
-        },
-      }}
-    >
-      <Box
-        className="image-frame"
-        sx={{
-          width: "100%",
-          height: "100%",
-          padding: "6px",
-          paddingBottom: "24px",
-          backgroundColor: "#fefefe",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.1)",
-          transform: `rotate(${rotation}deg)`,
-          transition: "box-shadow 0.3s ease",
-        }}
-      >
-        <Box
-          component="img"
-          src={src}
-          alt={alt}
-          sx={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
-        />
-      </Box>
-    </Box>
-  );
-};
-
-// Animated wrapper
-const AnimatedSection = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => {
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), delay * 1000);
-    return () => clearTimeout(timer);
-  }, [delay]);
-
-  return (
-    <Box
-      sx={{
-        opacity: isVisible ? 1 : 0,
-        animation: isVisible ? `${fadeInUp} 0.6s ease-out forwards` : "none",
-      }}
-    >
-      {children}
-    </Box>
-  );
-};
-
-// Text paragraph styling
-const textStyles = {
-  color: colors.body,
-  fontSize: { xs: "1rem", md: "1.1rem" },
-  lineHeight: 1.9,
-  letterSpacing: "0.01em",
-  mb: 1.5,
-};
 
 export const Venue = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [currentBgIndex, setCurrentBgIndex] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Slow crossfade between background images
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentBgIndex((prev) => (prev + 1) % venueImages.length);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fade in content on mount
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleImageClick = (src: string) => {
     setSelectedImage(src);
@@ -173,119 +54,208 @@ export const Venue = () => {
   return (
     <Box
       sx={{
-        py: { xs: 3, md: 5 },
-        px: { xs: 2, md: 4 },
-        maxWidth: "800px",
-        mx: "auto",
+        position: "relative",
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      <AnimatedSection delay={0}>
-        {/* First paragraph with images floated left */}
-        <Box sx={{ overflow: "hidden", mb: 2 }}>
-          <ScrapbookImage
-            src={venueImages[0].src}
-            alt={venueImages[0].alt}
-            rotation={-4}
-            size="medium"
-            floatAnimation={1}
-            delay={0.2}
-            onClick={() => handleImageClick(venueImages[0].src)}
-            float="left"
-          />
-          <Typography variant="body1" sx={textStyles}>
-            When we first started to get to know each other, we discovered that we both have family ties in Gaylord.
-            We both have fond memories growing up, spending summers playing in the woods, winters on the ski slopes,
-            and Thanksgivings shared with family.
-          </Typography>
-        </Box>
-      </AnimatedSection>
+      {/* Background images with crossfade */}
+      {venueImages.map((image, index) => (
+        <Box
+          key={image.src}
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage: `url(${image.src})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            opacity: index === currentBgIndex ? 1 : 0,
+            transition: "opacity 2s ease-in-out",
+            zIndex: 0,
+          }}
+        />
+      ))}
 
-      <AnimatedSection delay={0.2}>
-        {/* Second paragraph with images floated right */}
-        <Box sx={{ overflow: "hidden", mb: 2 }}>
-          <ScrapbookImage
-            src={venueImages[1].src}
-            alt={venueImages[1].alt}
-            rotation={3}
-            size="medium"
-            floatAnimation={2}
-            delay={0.4}
-            onClick={() => handleImageClick(venueImages[1].src)}
-            float="right"
-          />
-          <Typography variant="body1" sx={textStyles}>
-            As our relationship grew, we continued to make some of our favorite memories together up north.
-            Spending time with family, our annual friend's trips, walking around the woods, swimming and fishing
-            are some of our favorite things to do.
-          </Typography>
-        </Box>
-      </AnimatedSection>
+      {/* Dark overlay for text readability */}
+      <Box
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background:
+            "linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.7) 100%)",
+          zIndex: 1,
+        }}
+      />
 
-      <AnimatedSection delay={0.4}>
-        {/* Third paragraph with images floated left */}
-        <Box sx={{ overflow: "hidden", mb: 2 }}>
-          <ScrapbookImage
-            src={venueImages[2].src}
-            alt={venueImages[2].alt}
-            rotation={-3}
-            size="medium"
-            floatAnimation={3}
-            delay={0.6}
-            onClick={() => handleImageClick(venueImages[2].src)}
-            float="left"
-          />
-          <Typography variant="body1" sx={textStyles}>
-            When it came time to choose a venue, we quickly realized that the most meaningful place to begin
-            this next chapter in our relationship would be the place that initially drew us together.
-          </Typography>
-        </Box>
-      </AnimatedSection>
-
-      <AnimatedSection delay={0.6}>
-        {/* Fourth paragraph with image floated right */}
-        <Box sx={{ overflow: "hidden", mb: 2 }}>
-          <ScrapbookImage
-            src={venueImages[3].src}
-            alt={venueImages[3].alt}
-            rotation={4}
-            size="medium"
-            floatAnimation={1}
-            delay={0.8}
-            onClick={() => handleImageClick(venueImages[3].src)}
-            float="right"
-          />
-          <Typography variant="body1" sx={textStyles}>
-            We are so grateful to be able to celebrate our wedding on the White Property
-            and cannot wait to share this special day with all of you!
-          </Typography>
-        </Box>
-      </AnimatedSection>
-
-      {/* Remaining images in a small gallery at bottom */}
-      <AnimatedSection delay={0.8}>
+      {/* Content */}
+      <Box
+        sx={{
+          position: "relative",
+          zIndex: 2,
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          py: { xs: 4, md: 6 },
+          px: { xs: 3, md: 4 },
+        }}
+      >
         <Box
           sx={{
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            gap: 2,
-            mt: 4,
+            maxWidth: "700px",
+            mx: "auto",
+            opacity: isVisible ? 1 : 0,
+            animation: isVisible
+              ? `${fadeInUp} 0.8s ease-out forwards`
+              : "none",
           }}
         >
-          {venueImages.slice(4).map((image, index) => (
-            <ScrapbookImage
+          <Typography
+            variant="h1"
+            sx={{
+              fontFamily: "Brightwall, serif",
+              fontSize: { xs: "3rem", md: "4rem" },
+              color: colors.lightText.primary,
+              textAlign: "center",
+              mb: { xs: 3, md: 4 },
+              textShadow: "0 2px 8px rgba(0,0,0,0.4)",
+            }}
+          >
+            Our Venue
+          </Typography>
+
+          <Typography
+            variant="body1"
+            sx={{
+              color: colors.lightText.primary,
+              fontSize: { xs: "1.05rem", md: "1.15rem" },
+              lineHeight: 1.9,
+              letterSpacing: "0.01em",
+              mb: 3,
+              textShadow: "0 2px 4px rgba(0,0,0,0.3)",
+              textIndent: "2em",
+            }}
+          >
+            When we first started talking to one another at Michigan State, we
+            quickly discovered that we both have connections to Gaylord. It was
+            a pleasant surprise to learn that we shared similar memories of
+            carefree summers playing in the woods, cozy winters on the slopes,
+            and family celebrations up north.
+          </Typography>
+
+          <Typography
+            variant="body1"
+            sx={{
+              color: colors.lightText.primary,
+              fontSize: { xs: "1.05rem", md: "1.15rem" },
+              lineHeight: 1.9,
+              letterSpacing: "0.01em",
+              mb: 3,
+              textShadow: "0 2px 4px rgba(0,0,0,0.3)",
+              textIndent: "2em",
+            }}
+          >
+            Throughout our relationship, we created many memories of our own
+            here. Over the years, we went from being the “new person” at each
+            other’s family gatherings, to becoming a fully-accepted member of
+            the family. We created new traditions ourselves - gathering our
+            friends together each winter for a ski trip, or each summer to camp
+            in the woods. Spending time up north continues to be one of our
+            favorite things to do.
+          </Typography>
+
+          <Typography
+            variant="body1"
+            sx={{
+              color: colors.lightText.primary,
+              fontSize: { xs: "1.05rem", md: "1.15rem" },
+              lineHeight: 1.9,
+              letterSpacing: "0.01em",
+              mb: 3,
+              textShadow: "0 2px 4px rgba(0,0,0,0.3)",
+              textIndent: "2em",
+            }}
+          >
+            When it came time to choose a venue for our wedding, it was an easy
+            decision to host it here. It was the natural choice for us to begin
+            the next chapter of our relationship in the same place that helped
+            draw us together.
+          </Typography>
+
+          <Typography
+            variant="body1"
+            sx={{
+              color: colors.lightText.primary,
+              fontSize: { xs: "1.05rem", md: "1.15rem" },
+              lineHeight: 1.9,
+              letterSpacing: "0.01em",
+              textShadow: "0 2px 4px rgba(0,0,0,0.3)",
+              textIndent: "2em",
+            }}
+          >
+            We are so grateful and excited to celebrate our wedding on the White
+            Family Property, and we cannot wait to share this special day with
+            all of you!
+          </Typography>
+        </Box>
+
+        {/* Thumbnail gallery */}
+        <Box
+          sx={{
+            mt: { xs: 4, md: 5 },
+            display: "flex",
+            justifyContent: "center",
+            flexWrap: "wrap",
+            gap: { xs: 1, md: 1.5 },
+            opacity: isVisible ? 1 : 0,
+            animation: isVisible
+              ? `${fadeInUp} 0.8s ease-out 0.3s forwards`
+              : "none",
+            animationFillMode: "backwards",
+          }}
+        >
+          {venueImages.map((image, index) => (
+            <Box
               key={index}
-              src={image.src}
-              alt={image.alt}
-              rotation={index % 2 === 0 ? -3 : 4}
-              size="small"
-              floatAnimation={((index % 3) + 1) as 1 | 2 | 3}
-              delay={1 + index * 0.2}
               onClick={() => handleImageClick(image.src)}
-            />
+              sx={{
+                width: { xs: 60, md: 80 },
+                height: { xs: 60, md: 80 },
+                borderRadius: 1,
+                overflow: "hidden",
+                cursor: "pointer",
+                border: "2px solid rgba(255,255,255,0.4)",
+                transition: "all 0.3s ease",
+                opacity: index === currentBgIndex ? 1 : 0.7,
+                transform: index === currentBgIndex ? "scale(1.1)" : "scale(1)",
+                "&:hover": {
+                  opacity: 1,
+                  transform: "scale(1.1)",
+                  borderColor: "rgba(255,255,255,0.8)",
+                },
+              }}
+            >
+              <Box
+                component="img"
+                src={image.src}
+                alt={image.alt}
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+              />
+            </Box>
           ))}
         </Box>
-      </AnimatedSection>
+      </Box>
 
       {/* Image Modal */}
       <Modal

@@ -109,7 +109,17 @@ export const Navbar = () => {
           >
             <Typography
               variant="h5"
-              sx={{ textAlign: "center", mt: 2, color: "#883d17" }}
+              component={Link}
+              to="/"
+              sx={{
+                textAlign: "center",
+                mt: 2,
+                color: "#883d17",
+                textDecoration: "none",
+                "&:hover": {
+                  color: "#883d17",
+                },
+              }}
             >
               Kathryn & Nicholas
             </Typography>

@@ -17,7 +17,7 @@ export const Home = () => {
         textAlign: "center",
         backgroundImage: "url(/homepage.jpeg)",
         backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundPosition: { xs: "45% center", md: "center" },
         backgroundRepeat: "no-repeat",
         position: "relative",
         "&::before": {

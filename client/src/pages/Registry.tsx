@@ -2,7 +2,7 @@ import { Box, Typography } from '@mui/material';
 
 export const Registry = () => {
   return (
-    <Box sx={{ py: 8 }}>
+    <Box sx={{ py: 8, textAlign: "center" }}>
       <Typography variant="h3" component="h1" gutterBottom>
         Registry
       </Typography>

@@ -26,15 +26,17 @@ export const Travel = () => {
   const venueCoordinates: [number, number] = [
     44.89995101470253, -84.63170317445132,
   ];
+  const mapCoordinates: [number, number] = [
+    44.891948636404884, -84.62552478705584,
+  ];
 
-  const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${venueCoordinates[0]},${venueCoordinates[1]}`;
+  const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${mapCoordinates[0]},${mapCoordinates[1]}`;
 
   const hotelInfo = {
-    name: "Tru by Hilton Gaylord",
-    address: "1048 W Main St",
+    name: "Comfort Inn & Suites, Gaylord",
+    address: "831 W. Main St.",
     city: "Gaylord, MI 49735",
-    bookingUrl:
-      "https://www.hilton.com/en/hotels/tvcglru-tru-gaylord/?SEO_id=GMB-AMER-RU-TVCGLRU&y_source=1_MjI0MzQyOTgtNzE1LWxvY2F0aW9uLndlYnNpdGU%3D",
+    bookingUrl: "https://www.choicehotels.com/reservations/groups/pj75s0",
   };
 
   return (
@@ -143,90 +145,155 @@ export const Travel = () => {
       <Paper
         elevation={0}
         sx={{
-          p: { xs: 3, md: 4 },
           mb: { xs: 3, md: 4 },
           backgroundColor: colors.warmIvory,
           borderRadius: 2,
-          textAlign: "center",
+          overflow: "hidden",
         }}
       >
-        <Typography
-          variant="h4"
-          component="h2"
+        <Box
           sx={{
-            color: colors.heading,
-            mb: 2,
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
           }}
         >
-          Accommodations
-        </Typography>
+          {/* Text Content */}
+          <Box
+            sx={{
+              p: { xs: 3, md: 4 },
+              flex: { md: 1 },
+              textAlign: "center",
+            }}
+          >
+            <Typography
+              variant="h4"
+              component="h2"
+              sx={{
+                color: colors.heading,
+                mb: 2,
+              }}
+            >
+              Accommodations
+            </Typography>
 
-        <Typography
-          variant="body1"
-          sx={{
-            color: colors.body,
-            mb: 3,
-          }}
-        >
-          A hotel block is available for those who want to use it. The shuttle
-          will pick up and drop off at this location.
-        </Typography>
+            <Typography
+              variant="body1"
+              sx={{
+                color: colors.body,
+                mb: 2,
+              }}
+            >
+              A hotel block is available at the Comfort Inn for those who want
+              to use it. You can reserve your room by calling the front desk at
+              989-217-9700 and referencing the "Beauchamp / White Wedding" or by
+              clicking the booking button below.
+            </Typography>
 
-        <Typography
-          variant="h6"
-          sx={{
-            color: colors.heading,
-            fontFamily: "'Kabel', sans-serif",
-            fontWeight: 600,
-            mb: 1,
-          }}
-        >
-          {hotelInfo.name}
-        </Typography>
+            <Box
+              component="ul"
+              sx={{
+                color: colors.body,
+                mb: 0,
+                textAlign: "left",
+                maxWidth: "500px",
+                mx: "auto",
+                pl: 2,
+              }}
+            >
+              <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+                Rooms must be booked before July 17th, 2026 to reserve the group
+                rate and guarantee availability
+              </Typography>
+              <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+                Two night minimum stay required
+              </Typography>
+              <Typography component="li" variant="body1">
+                Check-in is 4pm (earlier check-ins not guaranteed)
+              </Typography>
+            </Box>
+          </Box>
 
-        <Typography
-          variant="body1"
-          sx={{
-            color: colors.body,
-            mb: 0.5,
-          }}
-        >
-          {hotelInfo.address}
-        </Typography>
+          {/* Hotel Info */}
+          <Box
+            sx={{
+              width: { xs: "100%", md: "50%" },
+              flexShrink: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              p: { xs: 3, md: 4 },
+            }}
+          >
+            <Box
+              component="img"
+              src="/comfort-inn.webp"
+              alt="Comfort Inn & Suites, Gaylord"
+              sx={{
+                width: "100%",
+                maxWidth: "300px",
+                height: "auto",
+                borderRadius: 2,
+                mb: 2,
+              }}
+            />
+            <Typography
+              variant="h6"
+              sx={{
+                color: colors.heading,
+                fontFamily: "'Kabel', sans-serif",
+                fontWeight: 600,
+                mb: 1,
+              }}
+            >
+              {hotelInfo.name}
+            </Typography>
 
-        <Typography
-          variant="body1"
-          sx={{
-            color: colors.body,
-            mb: 3,
-          }}
-        >
-          {hotelInfo.city}
-        </Typography>
+            <Typography
+              variant="body1"
+              sx={{
+                color: colors.body,
+                mb: 0.5,
+              }}
+            >
+              {hotelInfo.address}
+            </Typography>
 
-        <Button
-          variant="contained"
-          href={hotelInfo.bookingUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          sx={{
-            backgroundColor: colors.olive,
-            color: colors.cream,
-            fontWeight: 600,
-            px: 3,
-            py: 1,
-            "&:hover": {
-              backgroundColor: colors.bronze,
-              color: colors.cream,
-            },
-          }}
-        >
-          Book Your Stay
-        </Button>
+            <Typography
+              variant="body1"
+              sx={{
+                color: colors.body,
+                mb: 3,
+              }}
+            >
+              {hotelInfo.city}
+            </Typography>
+
+            <Button
+              variant="contained"
+              href={hotelInfo.bookingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                backgroundColor: colors.olive,
+                color: colors.cream,
+                fontWeight: 600,
+                px: 3,
+                py: 1,
+                "&:hover": {
+                  backgroundColor: colors.bronze,
+                  color: colors.cream,
+                },
+              }}
+            >
+              Book Your Stay
+            </Button>
+          </Box>
+        </Box>
       </Paper>
 
       {/* Transportation Section */}
-      <Paper
+      {/* <Paper
         elevation={0}
         sx={{
           p: { xs: 3, md: 4 },
@@ -265,7 +332,7 @@ export const Travel = () => {
         >
           Guests may also drive and park at the venue if preferred.
         </Typography>
-      </Paper>
+      </Paper> */}
     </Box>
   );
 };
