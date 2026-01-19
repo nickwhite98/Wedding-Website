@@ -65,6 +65,31 @@ export const Venue = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Lock body scroll when modal is open (including touch scrolling on mobile)
+  useEffect(() => {
+    if (selectedImageIndex !== null) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+
+      // Lock the body
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.overflow = "hidden";
+
+      return () => {
+        // Restore body and scroll position
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.left = "";
+        document.body.style.right = "";
+        document.body.style.overflow = "";
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [selectedImageIndex]);
+
   const handleImageClick = (index: number) => {
     setSelectedImageIndex(index);
   };
@@ -187,7 +212,7 @@ export const Venue = () => {
     <Box
       sx={{
         position: "relative",
-        minHeight: "100vh",
+        minHeight: "100dvh",
         display: "flex",
         flexDirection: "column",
       }}
@@ -462,7 +487,7 @@ export const Venue = () => {
             sx={{
               position: "relative",
               width: "90vw",
-              height: "85vh",
+              height: "85dvh",
               outline: "none",
               overflow: "visible",
               cursor: "pointer",
