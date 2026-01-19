@@ -158,23 +158,33 @@ export const Venue = () => {
   const minSwipeDistance = 50;
 
   const onTouchStart = (e: React.TouchEvent) => {
+    // Don't start a new gesture if animating
+    if (isAnimating) return;
     setTouchStart(e.targetTouches[0].clientX);
     setDragOffset(0);
     setIsDragging(true);
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
-    if (touchStart === null) return;
+    // Ignore moves if not actively dragging or if animating
+    if (touchStart === null || isAnimating || !isDragging) return;
     const currentX = e.targetTouches[0].clientX;
     const offset = currentX - touchStart;
     setDragOffset(offset);
   };
 
   const onTouchEnd = () => {
+    // Ignore if animating or not dragging
+    if (isAnimating || !isDragging) {
+      setTouchStart(null);
+      return;
+    }
+
     const isLeftSwipe = dragOffset < -minSwipeDistance;
     const isRightSwipe = dragOffset > minSwipeDistance;
 
     setIsDragging(false);
+    setTouchStart(null);
 
     if (isLeftSwipe) {
       // Animate to the left (show next image)
@@ -183,10 +193,14 @@ export const Venue = () => {
       setDragOffset(-slideDistance);
       setTimeout(() => {
         setSkipTransition(true);
-        handleNextImage();
+        setSelectedImageIndex((prev) =>
+          prev !== null ? (prev + 1) % allVenueImages.length : null
+        );
         setDragOffset(0);
-        setIsAnimating(false);
-        requestAnimationFrame(() => setSkipTransition(false));
+        requestAnimationFrame(() => {
+          setSkipTransition(false);
+          setIsAnimating(false);
+        });
       }, 300);
     } else if (isRightSwipe) {
       // Animate to the right (show previous image)
@@ -195,17 +209,19 @@ export const Venue = () => {
       setDragOffset(slideDistance);
       setTimeout(() => {
         setSkipTransition(true);
-        handlePrevImage();
+        setSelectedImageIndex((prev) =>
+          prev !== null ? (prev - 1 + allVenueImages.length) % allVenueImages.length : null
+        );
         setDragOffset(0);
-        setIsAnimating(false);
-        requestAnimationFrame(() => setSkipTransition(false));
+        requestAnimationFrame(() => {
+          setSkipTransition(false);
+          setIsAnimating(false);
+        });
       }, 300);
     } else {
       // Snap back to center
       setDragOffset(0);
     }
-
-    setTouchStart(null);
   };
 
   return (
