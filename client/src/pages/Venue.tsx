@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { Box, Typography, Modal, IconButton } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Box, Typography, Modal, IconButton, useMediaQuery, useTheme } from "@mui/material";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { colors } from "../theme";
 import { keyframes } from "@mui/system";
 
@@ -15,25 +16,46 @@ const fadeInUp = keyframes`
   }
 `;
 
-const venueImages = [
-  { src: "/venue/000085420001.JPEG", alt: "Venue scenery" },
-  { src: "/venue/000085430017-2.JPEG", alt: "Venue landscape" },
-  { src: "/venue/000085430022.JPEG", alt: "Property view" },
-  { src: "/venue/000085430030.JPEG", alt: "Outdoor setting" },
-  { src: "/venue/IMG_2873.jpg", alt: "Wedding location" },
-  { src: "/venue/IMG_7148.jpg", alt: "Natural surroundings" },
+// Background images that cycle behind the text
+const backgroundImages = [
+  { src: "/venue/backgrounds/000085420001.JPEG", alt: "Venue scenery" },
+  { src: "/venue/backgrounds/000085430017-2.JPEG", alt: "Venue landscape" },
+  { src: "/venue/backgrounds/000085430022.JPEG", alt: "Property view" },
+  { src: "/venue/backgrounds/000085430030.JPEG", alt: "Outdoor setting" },
+  { src: "/venue/backgrounds/IMG_2873.jpg", alt: "Wedding location" },
+  { src: "/venue/backgrounds/IMG_7148.jpg", alt: "Natural surroundings" },
 ];
 
+// All venue images for the carousel/gallery (backgrounds + others)
+const allVenueImages = [
+  ...backgroundImages,
+  { src: "/venue/IMG_8195.jpg", alt: "Venue photo" },
+];
+
+const SLIDE_GAP = 40; // Gap between images
+
 export const Venue = () => {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [skipTransition, setSkipTransition] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
+  // Get the actual container width for animations
+  const getContainerWidth = () => containerRef.current?.offsetWidth || window.innerWidth * 0.9;
 
   // Slow crossfade between background images
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentBgIndex((prev) => (prev + 1) % venueImages.length);
-    }, 8000);
+      setCurrentBgIndex((prev) => (prev + 1) % backgroundImages.length);
+    }, 15000);
     return () => clearInterval(interval);
   }, []);
 
@@ -43,12 +65,122 @@ export const Venue = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleImageClick = (src: string) => {
-    setSelectedImage(src);
+  const handleImageClick = (index: number) => {
+    setSelectedImageIndex(index);
   };
 
   const handleClose = () => {
-    setSelectedImage(null);
+    setSelectedImageIndex(null);
+  };
+
+  const handlePrevImage = useCallback((animate = false) => {
+    if (animate && !isAnimating) {
+      const slideDistance = getContainerWidth() + SLIDE_GAP;
+      setIsAnimating(true);
+      setDragOffset(slideDistance);
+      setTimeout(() => {
+        setSkipTransition(true);
+        setSelectedImageIndex((prev) =>
+          prev !== null ? (prev - 1 + allVenueImages.length) % allVenueImages.length : null
+        );
+        setDragOffset(0);
+        setIsAnimating(false);
+        // Re-enable transitions after the offset reset
+        requestAnimationFrame(() => setSkipTransition(false));
+      }, 300);
+    } else if (!animate) {
+      setSelectedImageIndex((prev) =>
+        prev !== null ? (prev - 1 + allVenueImages.length) % allVenueImages.length : null
+      );
+    }
+  }, [isAnimating]);
+
+  const handleNextImage = useCallback((animate = false) => {
+    if (animate && !isAnimating) {
+      const slideDistance = getContainerWidth() + SLIDE_GAP;
+      setIsAnimating(true);
+      setDragOffset(-slideDistance);
+      setTimeout(() => {
+        setSkipTransition(true);
+        setSelectedImageIndex((prev) =>
+          prev !== null ? (prev + 1) % allVenueImages.length : null
+        );
+        setDragOffset(0);
+        setIsAnimating(false);
+        // Re-enable transitions after the offset reset
+        requestAnimationFrame(() => setSkipTransition(false));
+      }, 300);
+    } else if (!animate) {
+      setSelectedImageIndex((prev) =>
+        prev !== null ? (prev + 1) % allVenueImages.length : null
+      );
+    }
+  }, [isAnimating]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (selectedImageIndex === null) return;
+      if (e.key === "ArrowLeft") handlePrevImage();
+      if (e.key === "ArrowRight") handleNextImage();
+      if (e.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedImageIndex, handlePrevImage, handleNextImage]);
+
+  // Swipe handling with drag-to-follow
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+    setDragOffset(0);
+    setIsDragging(true);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (touchStart === null) return;
+    const currentX = e.targetTouches[0].clientX;
+    const offset = currentX - touchStart;
+    setDragOffset(offset);
+  };
+
+  const onTouchEnd = () => {
+    const isLeftSwipe = dragOffset < -minSwipeDistance;
+    const isRightSwipe = dragOffset > minSwipeDistance;
+
+    setIsDragging(false);
+
+    if (isLeftSwipe) {
+      // Animate to the left (show next image)
+      const slideDistance = getContainerWidth() + SLIDE_GAP;
+      setIsAnimating(true);
+      setDragOffset(-slideDistance);
+      setTimeout(() => {
+        setSkipTransition(true);
+        handleNextImage();
+        setDragOffset(0);
+        setIsAnimating(false);
+        requestAnimationFrame(() => setSkipTransition(false));
+      }, 300);
+    } else if (isRightSwipe) {
+      // Animate to the right (show previous image)
+      const slideDistance = getContainerWidth() + SLIDE_GAP;
+      setIsAnimating(true);
+      setDragOffset(slideDistance);
+      setTimeout(() => {
+        setSkipTransition(true);
+        handlePrevImage();
+        setDragOffset(0);
+        setIsAnimating(false);
+        requestAnimationFrame(() => setSkipTransition(false));
+      }, 300);
+    } else {
+      // Snap back to center
+      setDragOffset(0);
+    }
+
+    setTouchStart(null);
   };
 
   return (
@@ -61,7 +193,7 @@ export const Venue = () => {
       }}
     >
       {/* Background images with crossfade */}
-      {venueImages.map((image, index) => (
+      {backgroundImages.map((image, index) => (
         <Box
           key={image.src}
           sx={{
@@ -89,7 +221,7 @@ export const Venue = () => {
           right: 0,
           bottom: 0,
           background:
-            "linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.7) 100%)",
+            "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.65) 50%, rgba(0,0,0,0.75) 100%)",
           zIndex: 1,
         }}
       />
@@ -211,30 +343,39 @@ export const Venue = () => {
           sx={{
             mt: { xs: 4, md: 5 },
             display: "flex",
-            justifyContent: "center",
-            flexWrap: "wrap",
+            justifyContent: { xs: "flex-start", md: "center" },
+            flexWrap: { xs: "nowrap", md: "wrap" },
             gap: { xs: 1, md: 1.5 },
             opacity: isVisible ? 1 : 0,
             animation: isVisible
               ? `${fadeInUp} 0.8s ease-out 0.3s forwards`
               : "none",
             animationFillMode: "backwards",
+            overflowX: { xs: "auto", md: "visible" },
+            mx: { xs: -3, md: 0 },
+            px: { xs: 3, md: 0 },
+            pb: { xs: 1, md: 0 },
+            "&::-webkit-scrollbar": {
+              display: "none",
+            },
+            scrollbarWidth: "none",
           }}
         >
-          {venueImages.map((image, index) => (
+          {allVenueImages.map((image, index) => (
             <Box
               key={index}
-              onClick={() => handleImageClick(image.src)}
+              onClick={() => handleImageClick(index)}
               sx={{
                 width: { xs: 60, md: 80 },
                 height: { xs: 60, md: 80 },
+                minWidth: { xs: 60, md: 80 },
                 borderRadius: 1,
                 overflow: "hidden",
                 cursor: "pointer",
                 border: "2px solid rgba(255,255,255,0.4)",
                 transition: "all 0.3s ease",
-                opacity: index === currentBgIndex ? 1 : 0.7,
-                transform: index === currentBgIndex ? "scale(1.1)" : "scale(1)",
+                opacity: index < backgroundImages.length && index === currentBgIndex ? 1 : 0.7,
+                transform: index < backgroundImages.length && index === currentBgIndex ? "scale(1.1)" : "scale(1)",
                 "&:hover": {
                   opacity: 1,
                   transform: "scale(1.1)",
@@ -259,7 +400,7 @@ export const Venue = () => {
 
       {/* Image Modal */}
       <Modal
-        open={!!selectedImage}
+        open={selectedImageIndex !== null}
         onClose={handleClose}
         sx={{
           display: "flex",
@@ -269,45 +410,171 @@ export const Venue = () => {
           backdropFilter: "blur(8px)",
         }}
       >
-        <Box
-          sx={{
-            position: "relative",
-            maxWidth: "90vw",
-            maxHeight: "90vh",
-            outline: "none",
-            animation: `${fadeInUp} 0.3s ease-out`,
-          }}
-        >
-          <IconButton
-            onClick={handleClose}
-            sx={{
-              position: "absolute",
-              top: -50,
-              right: 0,
-              color: "white",
-              backgroundColor: "rgba(0, 0, 0, 0.5)",
-              "&:hover": {
-                backgroundColor: "rgba(0, 0, 0, 0.7)",
-              },
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-          {selectedImage && (
-            <Box
-              component="img"
-              src={selectedImage}
-              alt="Enlarged venue photo"
+        <>
+          {/* Left arrow - desktop only */}
+          {!isMobile && (
+            <IconButton
+              onClick={() => handlePrevImage(true)}
               sx={{
-                maxWidth: "100%",
-                maxHeight: "85vh",
-                objectFit: "contain",
-                borderRadius: 1,
-                boxShadow: "0 25px 80px rgba(0,0,0,0.4)",
+                position: "fixed",
+                left: { md: 40 },
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "white",
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+                "&:hover": {
+                  backgroundColor: "rgba(0, 0, 0, 0.7)",
+                },
               }}
-            />
+            >
+              <ChevronLeftIcon fontSize="large" />
+            </IconButton>
           )}
-        </Box>
+
+          {/* Right arrow - desktop only */}
+          {!isMobile && (
+            <IconButton
+              onClick={() => handleNextImage(true)}
+              sx={{
+                position: "fixed",
+                right: { md: 40 },
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "white",
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+                "&:hover": {
+                  backgroundColor: "rgba(0, 0, 0, 0.7)",
+                },
+              }}
+            >
+              <ChevronRightIcon fontSize="large" />
+            </IconButton>
+          )}
+
+          <Box
+            ref={containerRef}
+            onClick={(e) => {
+              // Close modal when clicking on the container background (not the image)
+              if (e.target === e.currentTarget || (e.target as HTMLElement).tagName !== "IMG") {
+                handleClose();
+              }
+            }}
+            sx={{
+              position: "relative",
+              width: "90vw",
+              height: "85vh",
+              outline: "none",
+              overflow: "visible",
+              cursor: "pointer",
+            }}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
+            {selectedImageIndex !== null && (
+              <Box
+                sx={{
+                  position: "relative",
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {/* Previous image */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    height: "100%",
+                    transform: `translateX(calc(-100% - ${SLIDE_GAP}px + ${dragOffset}px))`,
+                    transition: isDragging || skipTransition ? "none" : "transform 0.3s ease-out",
+                    opacity: isDragging || isAnimating ? 1 : 0,
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={allVenueImages[(selectedImageIndex - 1 + allVenueImages.length) % allVenueImages.length].src}
+                    alt="Previous"
+                    sx={{
+                      maxWidth: "100%",
+                      maxHeight: "100%",
+                      objectFit: "contain",
+                      borderRadius: 1,
+                      boxShadow: "0 25px 80px rgba(0,0,0,0.4)",
+                      userSelect: "none",
+                      pointerEvents: "none",
+                    }}
+                  />
+                </Box>
+
+                {/* Current image */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    height: "100%",
+                    transform: `translateX(${dragOffset}px)`,
+                    transition: isDragging || skipTransition ? "none" : "transform 0.3s ease-out",
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={allVenueImages[selectedImageIndex].src}
+                    alt={allVenueImages[selectedImageIndex].alt}
+                    onClick={(e) => e.stopPropagation()}
+                    sx={{
+                      maxWidth: "100%",
+                      maxHeight: "100%",
+                      objectFit: "contain",
+                      borderRadius: 1,
+                      boxShadow: "0 25px 80px rgba(0,0,0,0.4)",
+                      userSelect: "none",
+                      cursor: "default",
+                    }}
+                  />
+                </Box>
+
+                {/* Next image */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    height: "100%",
+                    transform: `translateX(calc(100% + ${SLIDE_GAP}px + ${dragOffset}px))`,
+                    transition: isDragging || skipTransition ? "none" : "transform 0.3s ease-out",
+                    opacity: isDragging || isAnimating ? 1 : 0,
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={allVenueImages[(selectedImageIndex + 1) % allVenueImages.length].src}
+                    alt="Next"
+                    sx={{
+                      maxWidth: "100%",
+                      maxHeight: "100%",
+                      objectFit: "contain",
+                      borderRadius: 1,
+                      boxShadow: "0 25px 80px rgba(0,0,0,0.4)",
+                      userSelect: "none",
+                      pointerEvents: "none",
+                    }}
+                  />
+                </Box>
+              </Box>
+            )}
+          </Box>
+        </>
       </Modal>
     </Box>
   );
