@@ -13,74 +13,38 @@ import { RSVP } from "./pages/RSVP";
 import { Photos } from "./pages/Photos";
 import { Admin } from "./pages/Admin";
 import { useKonamiCode } from "./hooks/useKonamiCode";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 
-// Debug component - remove after fixing
-const DebugOverlay = () => {
-  const [info, setInfo] = useState({
-    innerHeight: 0,
-    scrollHeight: 0,
-    clientHeight: 0,
-    scrollY: 0,
-    maxScroll: 0,
-    rootHeight: 0,
-    bodyHeight: 0,
-  });
-
+// Hook to lock the initial viewport height on iOS Chrome
+const useViewportHeightFix = () => {
   useEffect(() => {
-    const update = () => {
-      const root = document.getElementById("root");
-      setInfo({
-        innerHeight: window.innerHeight,
-        scrollHeight: document.documentElement.scrollHeight,
-        clientHeight: document.documentElement.clientHeight,
-        scrollY: Math.round(window.scrollY),
-        maxScroll: document.documentElement.scrollHeight - window.innerHeight,
-        rootHeight: root?.scrollHeight || 0,
-        bodyHeight: document.body.scrollHeight,
-      });
-    };
-    update();
-    window.addEventListener("scroll", update);
-    window.addEventListener("resize", update);
+    // Only apply on mobile
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (!isMobile) return;
+
+    // Capture the initial inner height (with address bar visible)
+    const initialHeight = window.innerHeight;
+
+    // Set CSS custom property for the initial height
+    document.documentElement.style.setProperty('--initial-vh', `${initialHeight}px`);
+
+    // Set max-height on html to prevent expansion when address bar hides
+    document.documentElement.style.height = `${initialHeight}px`;
+    document.documentElement.style.overflow = 'auto';
+
     return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
+      document.documentElement.style.removeProperty('--initial-vh');
+      document.documentElement.style.height = '';
+      document.documentElement.style.overflow = '';
     };
   }, []);
-
-  return (
-    <Box
-      sx={{
-        position: "fixed",
-        top: 60,
-        right: 10,
-        backgroundColor: "rgba(0,0,0,0.9)",
-        color: "#0f0",
-        padding: "8px",
-        fontSize: "11px",
-        fontFamily: "monospace",
-        zIndex: 99999,
-        borderRadius: "4px",
-        maxWidth: "220px",
-      }}
-    >
-      <div>innerH: {info.innerHeight}</div>
-      <div>scrollH: {info.scrollHeight}</div>
-      <div>clientH: {info.clientHeight}</div>
-      <div>scrollY: {info.scrollY}</div>
-      <div>maxScroll: {info.maxScroll}</div>
-      <div style={{ color: "#ff0" }}>overflow: {info.scrollHeight - info.clientHeight}px</div>
-      <div style={{ marginTop: 4, borderTop: "1px solid #555", paddingTop: 4 }}>
-        <div>rootH: {info.rootHeight}</div>
-        <div>bodyH: {info.bodyHeight}</div>
-      </div>
-    </Box>
-  );
 };
 
 const AppContent = () => {
   const navigate = useNavigate();
+
+  // Fix iOS Chrome viewport height issue
+  useViewportHeightFix();
 
   // Enable Konami Code globally
   useKonamiCode(() => {
@@ -121,7 +85,6 @@ function App() {
     <ThemeProvider theme={theme}>
       <Router>
         <CssBaseline />
-        <DebugOverlay />
         <AppContent />
       </Router>
     </ThemeProvider>
