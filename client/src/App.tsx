@@ -27,7 +27,7 @@ const AppContent = () => {
       sx={{
         display: "flex",
         flexDirection: "column",
-        minHeight: "100dvh",
+        minHeight: "100svh",
         width: "100%",
       }}
     >

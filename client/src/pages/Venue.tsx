@@ -228,7 +228,7 @@ export const Venue = () => {
     <Box
       sx={{
         position: "relative",
-        minHeight: "100dvh",
+        minHeight: "100svh",
         display: "flex",
         flexDirection: "column",
       }}

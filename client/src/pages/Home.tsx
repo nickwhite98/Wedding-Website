@@ -9,7 +9,7 @@ export const Home = () => {
   return (
     <Box
       sx={{
-        minHeight: "100dvh",
+        minHeight: "100svh",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",

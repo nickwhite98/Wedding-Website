@@ -36,17 +36,20 @@ a:hover {
   color: #535bf2;
 }
 
-html {
+html, body {
+  margin: 0;
+  padding: 0;
+  min-width: 320px;
+  /* svh = small viewport height (when address bar is visible) - stable, no recalculation */
+  min-height: 100svh;
   overflow-x: hidden;
   overscroll-behavior-x: none;
 }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100dvh; /* dvh accounts for mobile browser chrome */
+/* Prevent extra scroll space on Chrome mobile */
+#root {
+  min-height: 100svh;
   overflow-x: hidden;
-  overscroll-behavior-x: none;
 }
 
 h1 {
