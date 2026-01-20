@@ -13,38 +13,9 @@ import { RSVP } from "./pages/RSVP";
 import { Photos } from "./pages/Photos";
 import { Admin } from "./pages/Admin";
 import { useKonamiCode } from "./hooks/useKonamiCode";
-import { useEffect } from "react";
-
-// Hook to lock the initial viewport height on iOS Chrome
-const useViewportHeightFix = () => {
-  useEffect(() => {
-    // Only apply on mobile
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    if (!isMobile) return;
-
-    // Capture the initial inner height (with address bar visible)
-    const initialHeight = window.innerHeight;
-
-    // Set CSS custom property for the initial height
-    document.documentElement.style.setProperty('--initial-vh', `${initialHeight}px`);
-
-    // Set max-height on html to prevent expansion when address bar hides
-    document.documentElement.style.height = `${initialHeight}px`;
-    document.documentElement.style.overflow = 'auto';
-
-    return () => {
-      document.documentElement.style.removeProperty('--initial-vh');
-      document.documentElement.style.height = '';
-      document.documentElement.style.overflow = '';
-    };
-  }, []);
-};
 
 const AppContent = () => {
   const navigate = useNavigate();
-
-  // Fix iOS Chrome viewport height issue
-  useViewportHeightFix();
 
   // Enable Konami Code globally
   useKonamiCode(() => {

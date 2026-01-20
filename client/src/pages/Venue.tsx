@@ -18,18 +18,18 @@ const fadeInUp = keyframes`
 
 // Background images that cycle behind the text
 const backgroundImages = [
-  { src: "/venue/backgrounds/000085420001.JPEG", alt: "Venue scenery" },
-  { src: "/venue/backgrounds/000085430017-2.JPEG", alt: "Venue landscape" },
-  { src: "/venue/backgrounds/000085430022.JPEG", alt: "Property view" },
-  { src: "/venue/backgrounds/000085430030.JPEG", alt: "Outdoor setting" },
-  { src: "/venue/backgrounds/IMG_2873.jpg", alt: "Wedding location" },
-  { src: "/venue/backgrounds/IMG_7148.jpg", alt: "Natural surroundings" },
+  { src: "/venue-images/backgrounds/000085420001.JPEG", alt: "Venue scenery" },
+  { src: "/venue-images/backgrounds/000085430017-2.JPEG", alt: "Venue landscape" },
+  { src: "/venue-images/backgrounds/000085430022.JPEG", alt: "Property view" },
+  { src: "/venue-images/backgrounds/000085430030.JPEG", alt: "Outdoor setting" },
+  { src: "/venue-images/backgrounds/IMG_2873.jpg", alt: "Wedding location" },
+  { src: "/venue-images/backgrounds/IMG_7148.jpg", alt: "Natural surroundings" },
 ];
 
 // All venue images for the carousel/gallery (backgrounds + others)
 const allVenueImages = [
   ...backgroundImages,
-  { src: "/venue/IMG_8195.jpg", alt: "Venue photo" },
+  { src: "/venue-images/IMG_8195.jpg", alt: "Venue photo" },
 ];
 
 const SLIDE_GAP = 40; // Gap between images
