@@ -18,23 +18,26 @@ import { useState, useEffect } from "react";
 // Debug component - remove after fixing
 const DebugOverlay = () => {
   const [info, setInfo] = useState({
-    vh: 0,
     innerHeight: 0,
     scrollHeight: 0,
     clientHeight: 0,
     scrollY: 0,
-    maxScroll: 0
+    maxScroll: 0,
+    rootHeight: 0,
+    bodyHeight: 0,
   });
 
   useEffect(() => {
     const update = () => {
+      const root = document.getElementById("root");
       setInfo({
-        vh: window.innerHeight,
         innerHeight: window.innerHeight,
         scrollHeight: document.documentElement.scrollHeight,
         clientHeight: document.documentElement.clientHeight,
         scrollY: Math.round(window.scrollY),
-        maxScroll: document.documentElement.scrollHeight - window.innerHeight
+        maxScroll: document.documentElement.scrollHeight - window.innerHeight,
+        rootHeight: root?.scrollHeight || 0,
+        bodyHeight: document.body.scrollHeight,
       });
     };
     update();
@@ -50,24 +53,28 @@ const DebugOverlay = () => {
     <Box
       sx={{
         position: "fixed",
-        bottom: 10,
-        left: 10,
-        backgroundColor: "rgba(0,0,0,0.8)",
+        top: 60,
+        right: 10,
+        backgroundColor: "rgba(0,0,0,0.9)",
         color: "#0f0",
         padding: "8px",
-        fontSize: "10px",
+        fontSize: "11px",
         fontFamily: "monospace",
         zIndex: 99999,
         borderRadius: "4px",
-        maxWidth: "200px",
+        maxWidth: "220px",
       }}
     >
-      <div>innerHeight: {info.innerHeight}px</div>
-      <div>scrollHeight: {info.scrollHeight}px</div>
-      <div>clientHeight: {info.clientHeight}px</div>
-      <div>scrollY: {info.scrollY}px</div>
-      <div>maxScroll: {info.maxScroll}px</div>
-      <div>overflow: {info.scrollHeight - info.clientHeight}px</div>
+      <div>innerH: {info.innerHeight}</div>
+      <div>scrollH: {info.scrollHeight}</div>
+      <div>clientH: {info.clientHeight}</div>
+      <div>scrollY: {info.scrollY}</div>
+      <div>maxScroll: {info.maxScroll}</div>
+      <div style={{ color: "#ff0" }}>overflow: {info.scrollHeight - info.clientHeight}px</div>
+      <div style={{ marginTop: 4, borderTop: "1px solid #555", paddingTop: 4 }}>
+        <div>rootH: {info.rootHeight}</div>
+        <div>bodyH: {info.bodyHeight}</div>
+      </div>
     </Box>
   );
 };
