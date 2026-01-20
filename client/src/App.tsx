@@ -13,6 +13,64 @@ import { RSVP } from "./pages/RSVP";
 import { Photos } from "./pages/Photos";
 import { Admin } from "./pages/Admin";
 import { useKonamiCode } from "./hooks/useKonamiCode";
+import { useState, useEffect } from "react";
+
+// Debug component - remove after fixing
+const DebugOverlay = () => {
+  const [info, setInfo] = useState({
+    vh: 0,
+    innerHeight: 0,
+    scrollHeight: 0,
+    clientHeight: 0,
+    scrollY: 0,
+    maxScroll: 0
+  });
+
+  useEffect(() => {
+    const update = () => {
+      setInfo({
+        vh: window.innerHeight,
+        innerHeight: window.innerHeight,
+        scrollHeight: document.documentElement.scrollHeight,
+        clientHeight: document.documentElement.clientHeight,
+        scrollY: Math.round(window.scrollY),
+        maxScroll: document.documentElement.scrollHeight - window.innerHeight
+      });
+    };
+    update();
+    window.addEventListener("scroll", update);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
+  return (
+    <Box
+      sx={{
+        position: "fixed",
+        bottom: 10,
+        left: 10,
+        backgroundColor: "rgba(0,0,0,0.8)",
+        color: "#0f0",
+        padding: "8px",
+        fontSize: "10px",
+        fontFamily: "monospace",
+        zIndex: 99999,
+        borderRadius: "4px",
+        maxWidth: "200px",
+      }}
+    >
+      <div>innerHeight: {info.innerHeight}px</div>
+      <div>scrollHeight: {info.scrollHeight}px</div>
+      <div>clientHeight: {info.clientHeight}px</div>
+      <div>scrollY: {info.scrollY}px</div>
+      <div>maxScroll: {info.maxScroll}px</div>
+      <div>overflow: {info.scrollHeight - info.clientHeight}px</div>
+    </Box>
+  );
+};
 
 const AppContent = () => {
   const navigate = useNavigate();
@@ -56,6 +114,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <Router>
         <CssBaseline />
+        <DebugOverlay />
         <AppContent />
       </Router>
     </ThemeProvider>
