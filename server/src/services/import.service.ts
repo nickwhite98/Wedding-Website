@@ -111,7 +111,6 @@ export class ImportService {
                 inviteSent: this.parseBoolean(row.inviteSent),
                 tableNumber: row.tableNumber ? parseInt(row.tableNumber) : null,
                 notes: row.notes || null,
-                plusOne: false, // Default, can be updated manually later
               },
             });
             invitationId = invitation.id;
