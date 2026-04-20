@@ -10,6 +10,7 @@ import { Travel } from "./pages/Travel";
 import { Venue } from "./pages/Venue";
 import { Registry } from "./pages/Registry";
 import { RSVP } from "./pages/RSVP";
+import { RsvpEdit } from "./pages/RsvpEdit";
 import { Photos } from "./pages/Photos";
 import { Admin } from "./pages/Admin";
 import { useKonamiCode } from "./hooks/useKonamiCode";
@@ -43,6 +44,7 @@ const AppContent = () => {
           <Route path="/story" element={<Story />} />
           <Route path="/details" element={<Details />} />
           <Route path="/rsvp" element={<RSVP />} />
+          <Route path="/rsvp/edit" element={<RsvpEdit />} />
           <Route path="/photos" element={<Photos />} />
           <Route path="/admin" element={<Admin />} />
         </Routes>
