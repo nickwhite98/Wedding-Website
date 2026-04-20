@@ -70,12 +70,28 @@ jobs:
         env:
           SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
 
+      - name: Generate production env file
+        run: |
+          cat > .env.production << 'EOF'
+          PORT=${{ vars.PORT || '3001' }}
+          NODE_ENV=${{ vars.NODE_ENV || 'production' }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          JWT_EXPIRATION_HRS=${{ vars.JWT_EXPIRATION_HRS || '24' }}
+          DATABASE_URL=${{ vars.DATABASE_URL }}
+          RSVP_DEADLINE=${{ vars.RSVP_DEADLINE }}
+          APP_URL=${{ vars.APP_URL }}
+          RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM_EMAIL=${{ vars.RESEND_FROM_EMAIL }}
+          RSVP_NOTIFICATION_EMAIL=${{ vars.RSVP_NOTIFICATION_EMAIL }}
+          EOF
+
       - name: Create deployment package
         run: |
           tar -czf deployment.tar.gz \
             --exclude=.git \
             --exclude=*.db \
             --exclude=.env \
+            --exclude=.env.production \
             --exclude=.github \
             --exclude=client/node_modules \
             --exclude=client/src \
@@ -92,6 +108,7 @@ jobs:
       - name: Copy files to EC2
         run: |
           scp -i ~/.ssh/id_rsa deployment.tar.gz ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/
+          scp -i ~/.ssh/id_rsa .env.production ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/wedding/.env.production
 
       - name: Deploy on EC2
         run: |
