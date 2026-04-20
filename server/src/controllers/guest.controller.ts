@@ -117,6 +117,26 @@ export class GuestController {
     }
   }
 
+  // PATCH /api/guests/:id/assign
+  async assign(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = parseInt(req.params.id);
+      const { invitationId } = req.body as { invitationId: number | null };
+
+      if (invitationId !== null && typeof invitationId !== 'number') {
+        throw new AppError('invitationId must be a number or null', 400);
+      }
+
+      const guest = await guestService.assignGuestToInvitation(id, invitationId);
+      res.json({
+        success: true,
+        data: guest,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   // POST /api/guests/bulk-delete
   async bulkDelete(req: Request, res: Response, next: NextFunction) {
     try {

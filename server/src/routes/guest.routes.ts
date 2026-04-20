@@ -9,6 +9,7 @@ router.get('/', guestController.getAll.bind(guestController));
 router.get('/:id', guestController.getById.bind(guestController));
 router.post('/', guestController.create.bind(guestController));
 router.post('/bulk-delete', guestController.bulkDelete.bind(guestController));
+router.patch('/:id/assign', guestController.assign.bind(guestController));
 router.put('/:id', guestController.update.bind(guestController));
 router.delete('/:id', guestController.delete.bind(guestController));
 

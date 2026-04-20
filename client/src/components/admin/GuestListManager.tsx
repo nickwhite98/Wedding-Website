@@ -36,6 +36,13 @@ import {
   Delete as DeleteIcon,
   Group as GroupIcon,
   DeleteSweep as DeleteSweepIcon,
+  SwapHoriz as SwapHorizIcon,
+  PersonRemove as PersonRemoveIcon,
+  LocationOn as LocationOnIcon,
+  Phone as PhoneIcon,
+  TableRestaurant as TableRestaurantIcon,
+  CheckCircle as CheckCircleIcon,
+  RadioButtonUnchecked as RadioButtonUncheckedIcon,
 } from "@mui/icons-material";
 import { colors } from "../../theme";
 
@@ -107,6 +114,11 @@ export const GuestListManager = () => {
     dietaryRestrictions: "",
     menuChoice: "",
   });
+
+  // Move guest dialog
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [movingGuest, setMovingGuest] = useState<Guest | null>(null);
+  const [moveTargetId, setMoveTargetId] = useState<number | "">("");
 
   // Group into invitation dialog
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
@@ -270,6 +282,62 @@ export const GuestListManager = () => {
     }
   };
 
+  const handleOpenMoveDialog = (guest: Guest) => {
+    setMovingGuest(guest);
+    setMoveTargetId("");
+    setMoveDialogOpen(true);
+  };
+
+  const handleCloseMoveDialog = () => {
+    setMoveDialogOpen(false);
+    setMovingGuest(null);
+    setMoveTargetId("");
+  };
+
+  const handleConfirmMove = async () => {
+    if (!movingGuest) return;
+    const targetId = moveTargetId === "" ? null : Number(moveTargetId);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/guests/${movingGuest.id}/assign`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ invitationId: targetId }),
+        },
+      );
+      if (!response.ok) throw new Error("Failed to move guest");
+      await fetchData();
+      handleCloseMoveDialog();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to move guest");
+    }
+  };
+
+  const handleUnassignGuest = async (guest: Guest) => {
+    if (
+      !confirm(
+        `Remove ${guest.firstName} ${guest.lastName} from their invitation? They will remain in the guest list as unassigned.`,
+      )
+    ) {
+      return;
+    }
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/guests/${guest.id}/assign`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ invitationId: null }),
+        },
+      );
+      if (!response.ok) throw new Error("Failed to unassign guest");
+      await fetchData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to unassign guest");
+    }
+  };
+
   const handleOpenGroupDialog = () => {
     if (selectedGuests.length === 0) {
       alert("Please select at least one guest to group into an invitation");
@@ -363,6 +431,32 @@ export const GuestListManager = () => {
     guests.filter((g) => !g.invitationId),
   );
   const allGuests = filterAndSortGuests(guests);
+
+  const filteredInvitations = (() => {
+    if (!searchTerm) return invitations;
+    const term = searchTerm.toLowerCase();
+    return invitations.filter((inv) => {
+      const idMatch = String(inv.id).includes(term);
+      const addrMatch = [
+        inv.address,
+        inv.address2,
+        inv.city,
+        inv.state,
+        inv.zip,
+        inv.country,
+        inv.phoneNumber,
+        inv.notes,
+      ]
+        .filter(Boolean)
+        .some((v) => (v as string).toLowerCase().includes(term));
+      const guestMatch = inv.guests.some((g) =>
+        `${g.firstName} ${g.lastName} ${g.email || ""}`
+          .toLowerCase()
+          .includes(term),
+      );
+      return idMatch || addrMatch || guestMatch;
+    });
+  })();
 
   if (loading) {
     return (
@@ -488,15 +582,20 @@ export const GuestListManager = () => {
           onSelectAll={() => handleSelectAll(unassignedGuests)}
           onEditGuest={handleOpenGuestDialog}
           onDeleteGuest={handleDeleteGuest}
+          onMoveGuest={handleOpenMoveDialog}
+          onUnassignGuest={handleUnassignGuest}
           showSelection={true}
         />
       </TabPanel>
 
       <TabPanel value={currentTab} index={1}>
         <InvitationCardGrid
-          invitations={invitations}
+          invitations={filteredInvitations}
+          totalCount={invitations.length}
           onEditGuest={handleOpenGuestDialog}
           onDeleteGuest={handleDeleteGuest}
+          onMoveGuest={handleOpenMoveDialog}
+          onUnassignGuest={handleUnassignGuest}
           onRefresh={fetchData}
         />
       </TabPanel>
@@ -509,6 +608,8 @@ export const GuestListManager = () => {
           onSelectAll={() => handleSelectAll(allGuests)}
           onEditGuest={handleOpenGuestDialog}
           onDeleteGuest={handleDeleteGuest}
+          onMoveGuest={handleOpenMoveDialog}
+          onUnassignGuest={handleUnassignGuest}
           showSelection={true}
         />
       </TabPanel>
@@ -578,6 +679,72 @@ export const GuestListManager = () => {
             sx={{ backgroundColor: colors.olive }}
           >
             Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Move Guest Dialog */}
+      <Dialog
+        open={moveDialogOpen}
+        onClose={handleCloseMoveDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Move {movingGuest?.firstName} {movingGuest?.lastName}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2, color: colors.body }}>
+            {movingGuest?.invitationId
+              ? `Currently assigned to Invitation No. ${movingGuest.invitationId}. Select a new invitation or choose "Unassigned" to remove them from any invitation.`
+              : "This guest is currently unassigned. Select an invitation to add them to."}
+          </Typography>
+          <FormControl fullWidth sx={{ mt: 1 }}>
+            <InputLabel>Target invitation</InputLabel>
+            <Select
+              value={moveTargetId}
+              label="Target invitation"
+              onChange={(e) => {
+                const val = e.target.value as number | "";
+                setMoveTargetId(val === "" ? "" : Number(val));
+              }}
+            >
+              <MenuItem value="">
+                <em>Unassigned (remove from invitation)</em>
+              </MenuItem>
+              {invitations
+                .filter((inv) => inv.id !== movingGuest?.invitationId)
+                .map((inv) => {
+                  const names = inv.guests
+                    .map((g) => `${g.firstName} ${g.lastName}`)
+                    .join(", ");
+                  const location = [inv.city, inv.state]
+                    .filter(Boolean)
+                    .join(", ");
+                  const label = [
+                    `No. ${inv.id}`,
+                    names || "(no guests)",
+                    location,
+                  ]
+                    .filter(Boolean)
+                    .join(" — ");
+                  return (
+                    <MenuItem key={inv.id} value={inv.id}>
+                      {label}
+                    </MenuItem>
+                  );
+                })}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseMoveDialog}>Cancel</Button>
+          <Button
+            onClick={handleConfirmMove}
+            variant="contained"
+            sx={{ backgroundColor: colors.olive }}
+          >
+            Confirm Move
           </Button>
         </DialogActions>
       </Dialog>
@@ -723,6 +890,8 @@ interface GuestTableProps {
   onSelectAll: () => void;
   onEditGuest: (guest: Guest) => void;
   onDeleteGuest: (id: number) => void;
+  onMoveGuest: (guest: Guest) => void;
+  onUnassignGuest: (guest: Guest) => void;
   showSelection: boolean;
 }
 
@@ -733,6 +902,8 @@ const GuestTable = ({
   onSelectAll,
   onEditGuest,
   onDeleteGuest,
+  onMoveGuest,
+  onUnassignGuest,
   showSelection,
 }: GuestTableProps) => {
   if (guests.length === 0) {
@@ -797,12 +968,30 @@ const GuestTable = ({
                 <IconButton
                   onClick={() => onEditGuest(guest)}
                   sx={{ color: colors.olive }}
+                  title="Edit guest"
                 >
                   <EditIcon />
                 </IconButton>
                 <IconButton
+                  onClick={() => onMoveGuest(guest)}
+                  sx={{ color: colors.eucalyptus }}
+                  title="Move to another invitation"
+                >
+                  <SwapHorizIcon />
+                </IconButton>
+                {guest.invitationId && (
+                  <IconButton
+                    onClick={() => onUnassignGuest(guest)}
+                    sx={{ color: colors.cognac }}
+                    title="Remove from invitation (keep guest)"
+                  >
+                    <PersonRemoveIcon />
+                  </IconButton>
+                )}
+                <IconButton
                   onClick={() => onDeleteGuest(guest.id)}
                   sx={{ color: colors.burntSienna }}
+                  title="Delete guest"
                 >
                   <DeleteIcon />
                 </IconButton>
@@ -818,19 +1007,33 @@ const GuestTable = ({
 // Invitation Card Grid Component
 interface InvitationCardGridProps {
   invitations: Invitation[];
+  totalCount: number;
   onEditGuest: (guest: Guest) => void;
   onDeleteGuest: (id: number) => void;
+  onMoveGuest: (guest: Guest) => void;
+  onUnassignGuest: (guest: Guest) => void;
   onRefresh: () => void;
 }
 
 const InvitationCardGrid = ({
   invitations,
+  totalCount,
   onEditGuest,
   onDeleteGuest,
+  onMoveGuest,
+  onUnassignGuest,
   onRefresh,
 }: InvitationCardGridProps) => {
-  if (invitations.length === 0) {
+  if (totalCount === 0) {
     return <Alert severity="info">No invitations created yet.</Alert>;
+  }
+
+  if (invitations.length === 0) {
+    return (
+      <Alert severity="info">
+        No invitations match your search ({totalCount} total).
+      </Alert>
+    );
   }
 
   const handleDeleteInvitation = async (id: number) => {
@@ -853,6 +1056,17 @@ const InvitationCardGrid = ({
     }
   };
 
+  const formatAddress = (inv: Invitation) => {
+    const line1 = [inv.address, inv.address2].filter(Boolean).join(", ");
+    const line2 = [
+      inv.city,
+      [inv.state, inv.zip].filter(Boolean).join(" "),
+    ]
+      .filter(Boolean)
+      .join(", ");
+    return { line1, line2 };
+  };
+
   return (
     <Box
       sx={{
@@ -862,103 +1076,251 @@ const InvitationCardGrid = ({
           md: "repeat(2, 1fr)",
           lg: "repeat(3, 1fr)",
         },
-        gap: 2,
+        gap: 2.5,
       }}
     >
-      {invitations.map((invitation) => (
-        <Box key={invitation.id}>
+      {invitations.map((invitation) => {
+        const { line1, line2 } = formatAddress(invitation);
+        return (
           <Card
+            key={invitation.id}
             sx={{
               height: "100%",
               display: "flex",
               flexDirection: "column",
-              borderLeft: `4px solid ${colors.olive}`,
+              borderTop: `4px solid ${colors.olive}`,
+              backgroundColor: colors.warmIvory,
             }}
           >
-            <CardContent sx={{ flexGrow: 1 }}>
-              <Typography variant="h6" sx={{ mb: 1, color: colors.heading }}>
-                Invitation #{invitation.id}
-              </Typography>
-
-              <Typography variant="body2" sx={{ mb: 1 }}>
-                <strong>Address:</strong> {invitation.address || "No address"}
-                {invitation.address2 && `, ${invitation.address2}`}
-              </Typography>
-
-              <Typography variant="body2" sx={{ mb: 1 }}>
-                <strong>Location:</strong> {invitation.city || "-"},{" "}
-                {invitation.state || "-"} {invitation.zip || ""}
-              </Typography>
-
-              {invitation.phoneNumber && (
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Phone:</strong> {invitation.phoneNumber}
+            <CardContent sx={{ flexGrow: 1, pb: 1 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  mb: 1,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontFamily: "'Kabel', sans-serif",
+                    fontWeight: 600,
+                    fontSize: "1rem",
+                    color: colors.heading,
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Invitation&nbsp;No.&nbsp;{invitation.id}
                 </Typography>
-              )}
-
-              <Box sx={{ mt: 2, mb: 2 }}>
-                <Typography variant="body2" sx={{ fontWeight: "bold", mb: 1 }}>
-                  Guests ({invitation.guests.length}):
-                </Typography>
-                {invitation.guests.map((guest) => (
-                  <Box
-                    key={guest.id}
+                {invitation.tableNumber && (
+                  <Chip
+                    icon={<TableRestaurantIcon />}
+                    label={`Table ${invitation.tableNumber}`}
+                    size="small"
                     sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      py: 0.5,
+                      backgroundColor: colors.sage,
+                      color: colors.heading,
+                      fontWeight: 600,
                     }}
-                  >
-                    <Typography variant="body2">
-                      {guest.firstName} {guest.lastName}
-                    </Typography>
-                    <Box>
-                      <IconButton
-                        size="small"
-                        onClick={() => onEditGuest(guest)}
-                        sx={{ color: colors.olive }}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={() => onDeleteGuest(guest.id)}
-                        sx={{ color: colors.burntSienna }}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  </Box>
-                ))}
+                  />
+                )}
               </Box>
 
-              {invitation.plusOne && (
-                <Chip
-                  label="Plus One Allowed"
-                  size="small"
-                  color="success"
-                  sx={{ mt: 1 }}
-                />
+              {(line1 || line2) && (
+                <Box sx={{ display: "flex", gap: 1, mb: 0.5 }}>
+                  <LocationOnIcon
+                    fontSize="small"
+                    sx={{ color: colors.olive, mt: "2px" }}
+                  />
+                  <Box>
+                    {line1 && (
+                      <Typography variant="body2" sx={{ color: colors.body }}>
+                        {line1}
+                      </Typography>
+                    )}
+                    {line2 && (
+                      <Typography variant="body2" sx={{ color: colors.body }}>
+                        {line2}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
               )}
 
-              {invitation.tableNumber && (
-                <Typography variant="body2" sx={{ mt: 1 }}>
-                  <strong>Table:</strong> {invitation.tableNumber}
-                </Typography>
+              {invitation.phoneNumber && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 0.5,
+                  }}
+                >
+                  <PhoneIcon fontSize="small" sx={{ color: colors.olive }} />
+                  <Typography variant="body2" sx={{ color: colors.body }}>
+                    {invitation.phoneNumber}
+                  </Typography>
+                </Box>
               )}
+
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ mt: 1.5, mb: 1, flexWrap: "wrap", gap: 0.5 }}
+              >
+                <Chip
+                  size="small"
+                  icon={
+                    invitation.saveTheDateSent ? (
+                      <CheckCircleIcon />
+                    ) : (
+                      <RadioButtonUncheckedIcon />
+                    )
+                  }
+                  label="STD"
+                  variant={invitation.saveTheDateSent ? "filled" : "outlined"}
+                  sx={{
+                    backgroundColor: invitation.saveTheDateSent
+                      ? colors.eucalyptus
+                      : "transparent",
+                    color: invitation.saveTheDateSent
+                      ? "#fff"
+                      : colors.body,
+                    borderColor: colors.eucalyptus,
+                  }}
+                />
+                <Chip
+                  size="small"
+                  icon={
+                    invitation.inviteSent ? (
+                      <CheckCircleIcon />
+                    ) : (
+                      <RadioButtonUncheckedIcon />
+                    )
+                  }
+                  label="Invite"
+                  variant={invitation.inviteSent ? "filled" : "outlined"}
+                  sx={{
+                    backgroundColor: invitation.inviteSent
+                      ? colors.olive
+                      : "transparent",
+                    color: invitation.inviteSent ? "#fff" : colors.body,
+                    borderColor: colors.olive,
+                  }}
+                />
+                {invitation.plusOne && (
+                  <Chip
+                    size="small"
+                    label="+1 Allowed"
+                    sx={{
+                      backgroundColor: colors.dustyRose,
+                      color: colors.heading,
+                    }}
+                  />
+                )}
+              </Stack>
+
+              <Box
+                sx={{
+                  mt: 1.5,
+                  pt: 1.5,
+                  borderTop: `1px dashed ${colors.mushroom}`,
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: colors.body,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Guests · {invitation.guests.length}
+                </Typography>
+                {invitation.guests.length === 0 ? (
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: colors.bodyLight,
+                      fontStyle: "italic",
+                      mt: 0.5,
+                    }}
+                  >
+                    No guests assigned
+                  </Typography>
+                ) : (
+                  <Box sx={{ mt: 0.5 }}>
+                    {invitation.guests.map((guest) => (
+                      <Box
+                        key={guest.id}
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          py: 0.25,
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ color: colors.body }}>
+                          {guest.firstName} {guest.lastName}
+                        </Typography>
+                        <Box sx={{ display: "flex" }}>
+                          <IconButton
+                            size="small"
+                            onClick={() => onEditGuest(guest)}
+                            sx={{ color: colors.olive }}
+                            title="Edit guest"
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => onMoveGuest(guest)}
+                            sx={{ color: colors.eucalyptus }}
+                            title="Move to another invitation"
+                          >
+                            <SwapHorizIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => onUnassignGuest(guest)}
+                            sx={{ color: colors.cognac }}
+                            title="Remove from invitation"
+                          >
+                            <PersonRemoveIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => onDeleteGuest(guest.id)}
+                            sx={{ color: colors.burntSienna }}
+                            title="Delete guest"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+              </Box>
 
               {invitation.notes && (
                 <Typography
                   variant="caption"
-                  sx={{ mt: 1, display: "block", fontStyle: "italic" }}
+                  sx={{
+                    mt: 1.5,
+                    display: "block",
+                    fontStyle: "italic",
+                    color: colors.bodyLight,
+                  }}
                 >
-                  {invitation.notes}
+                  “{invitation.notes}”
                 </Typography>
               )}
             </CardContent>
 
-            <CardActions>
+            <CardActions sx={{ borderTop: `1px solid ${colors.mushroom}` }}>
               <Button
                 size="small"
                 startIcon={<DeleteIcon />}
@@ -969,8 +1331,8 @@ const InvitationCardGrid = ({
               </Button>
             </CardActions>
           </Card>
-        </Box>
-      ))}
+        );
+      })}
     </Box>
   );
 };

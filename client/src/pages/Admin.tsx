@@ -8,6 +8,9 @@ import {
   Tab,
   Paper,
   Button,
+  ThemeProvider,
+  createTheme,
+  useTheme,
 } from "@mui/material";
 import { PasswordPrompt } from "../components/PasswordPrompt";
 import { RsvpList } from "../components/admin/RsvpList";
@@ -37,7 +40,28 @@ const TabPanel = (props: TabPanelProps) => {
   );
 };
 
-export const Admin = () => {
+const useAdminTheme = () => {
+  const parent = useTheme();
+  const sansHeading = {
+    fontFamily: "'Kabel', sans-serif",
+    fontWeight: 600,
+    letterSpacing: "0.02em",
+  };
+  return createTheme({
+    ...parent,
+    typography: {
+      ...parent.typography,
+      h1: { ...parent.typography.h1, ...sansHeading },
+      h2: { ...parent.typography.h2, ...sansHeading },
+      h3: { ...parent.typography.h3, ...sansHeading },
+      h4: { ...parent.typography.h4, ...sansHeading },
+      h5: { ...parent.typography.h5, ...sansHeading },
+      h6: { ...parent.typography.h6, ...sansHeading },
+    },
+  });
+};
+
+const AdminContent = () => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(true);
@@ -167,5 +191,14 @@ export const Admin = () => {
         </TabPanel>
       </Paper>
     </Container>
+  );
+};
+
+export const Admin = () => {
+  const adminTheme = useAdminTheme();
+  return (
+    <ThemeProvider theme={adminTheme}>
+      <AdminContent />
+    </ThemeProvider>
   );
 };

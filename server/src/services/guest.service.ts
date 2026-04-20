@@ -103,6 +103,22 @@ export class GuestService {
       },
     });
   }
+
+  // Assign guest to a different invitation, or unassign (invitationId = null)
+  async assignGuestToInvitation(guestId: number, invitationId: number | null) {
+    return await prisma.guest.update({
+      where: { id: guestId },
+      data: {
+        invitation:
+          invitationId === null
+            ? { disconnect: true }
+            : { connect: { id: invitationId } },
+      },
+      include: {
+        invitation: true,
+      },
+    });
+  }
 }
 
 export default new GuestService();
