@@ -10,4 +10,8 @@ router.post('/submit', submitLimiter, rsvpController.submit.bind(rsvpController)
 router.get('/edit', editLimiter, rsvpController.getByEditToken.bind(rsvpController));
 router.put('/edit', editLimiter, rsvpController.updateByEditToken.bind(rsvpController));
 
+// Admin-only direct RSVP editing (auth is enforced client-side in this project).
+router.patch('/admin/response/:id', rsvpController.adminUpdateResponse.bind(rsvpController));
+router.delete('/admin/response/:id', rsvpController.adminDeleteResponse.bind(rsvpController));
+
 export default router;

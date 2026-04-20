@@ -68,14 +68,48 @@ export const CsvImporter = () => {
     }
   };
 
+  // Split one CSV line into fields, honoring double-quoted values that may
+  // themselves contain commas (e.g. addresses like "123 Main St, Apt 4").
+  const splitCsvLine = (line: string): string[] => {
+    const out: string[] = [];
+    let cur = "";
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQuotes) {
+        if (ch === '"' && line[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else if (ch === '"') {
+          inQuotes = false;
+        } else {
+          cur += ch;
+        }
+      } else {
+        if (ch === '"') {
+          inQuotes = true;
+        } else if (ch === ",") {
+          out.push(cur.trim());
+          cur = "";
+        } else {
+          cur += ch;
+        }
+      }
+    }
+    out.push(cur.trim());
+    return out;
+  };
+
   const parseCsv = (csvText: string) => {
-    const lines = csvText.split("\n");
+    // Strip BOM and normalize line endings
+    const normalized = csvText.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
+    const lines = normalized.split("\n");
     if (lines.length < 2) {
       throw new Error("CSV file must have at least a header row and one data row");
     }
 
     // Parse header
-    const headers = lines[0].split(",").map((h) => h.trim());
+    const headers = splitCsvLine(lines[0]);
 
     // Map headers to expected field names (case-insensitive)
     const headerMap: Record<string, string> = {};
@@ -110,16 +144,25 @@ export const CsvImporter = () => {
         headerMap[index] = "dietaryRestrictions";
       } else if (normalized.includes("notes")) {
         headerMap[index] = "notes";
+      } else if (
+        normalized === "ofguests" ||
+        normalized.includes("numberofguests") ||
+        normalized.includes("numguests") ||
+        normalized.includes("guestcount") ||
+        normalized === "partysize" ||
+        normalized.includes("partysize")
+      ) {
+        headerMap[index] = "numberOfGuests";
       }
     });
 
     // Parse data rows
     const rows = [];
     for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue; // Skip empty lines
+      const line = lines[i];
+      if (!line.trim()) continue; // Skip empty lines
 
-      const values = line.split(",").map((v) => v.trim());
+      const values = splitCsvLine(line);
       const row: any = {};
 
       values.forEach((value, index) => {
@@ -168,6 +211,11 @@ export const CsvImporter = () => {
             <li>TABLE NUMBER</li>
             <li>DIETARY RESTRICTIONS</li>
             <li>NOTES</li>
+            <li>
+              <strong># OF GUESTS</strong> - if greater than the number of
+              named rows at the same address, the invitation is marked as
+              plus-one allowed
+            </li>
           </ul>
         </Typography>
         <Alert severity="info" sx={{ mb: 2 }}>

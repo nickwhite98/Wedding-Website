@@ -7,6 +7,7 @@ router.get('/stats', invitationController.getStats.bind(invitationController));
 router.get('/', invitationController.getAll.bind(invitationController));
 router.get('/:id', invitationController.getById.bind(invitationController));
 router.post('/', invitationController.create.bind(invitationController));
+router.post('/bulk-delete', invitationController.bulkDelete.bind(invitationController));
 router.put('/:id', invitationController.update.bind(invitationController));
 router.delete('/:id', invitationController.delete.bind(invitationController));
 

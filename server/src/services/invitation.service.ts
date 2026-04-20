@@ -62,6 +62,15 @@ export class InvitationService {
     });
   }
 
+  // Bulk delete invitations (cascades to guests and responses)
+  async bulkDeleteInvitations(ids: number[]) {
+    return await prisma.invitation.deleteMany({
+      where: {
+        id: { in: ids },
+      },
+    });
+  }
+
   // Get invitation statistics
   async getInvitationStats() {
     const totalInvitations = await prisma.invitation.count();

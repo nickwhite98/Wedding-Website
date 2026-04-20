@@ -356,6 +356,70 @@ export class RsvpService {
       });
     });
   }
+
+  // Admin-only: overwrite the attendance/dietary of a single response.
+  async adminUpdateResponse(
+    responseId: number,
+    patch: { isAttending?: boolean; dietaryRestrictions?: string | null },
+  ) {
+    const response = await prisma.rsvpResponse.findUnique({
+      where: { id: responseId },
+    });
+    if (!response) throw new AppError('RSVP response not found', 404);
+
+    return prisma.$transaction(async (tx) => {
+      if (patch.dietaryRestrictions !== undefined) {
+        await tx.guest.update({
+          where: { id: response.guestId },
+          data: { dietaryRestrictions: patch.dietaryRestrictions ?? null },
+        });
+      }
+      if (patch.isAttending !== undefined) {
+        await tx.rsvpResponse.update({
+          where: { id: responseId },
+          data: { isAttending: patch.isAttending, respondedAt: new Date() },
+        });
+      }
+      return tx.rsvpResponse.findUnique({
+        where: { id: responseId },
+        include: { guest: true },
+      });
+    });
+  }
+
+  // Admin-only: delete a single response, reverting the guest to pre-RSVP state.
+  // If the guest was a plus-one (created at RSVP time), delete the guest record
+  // too. Clears invitation.rsvpEmail when no responses remain.
+  async adminDeleteResponse(responseId: number) {
+    const response = await prisma.rsvpResponse.findUnique({
+      where: { id: responseId },
+      include: { guest: true },
+    });
+    if (!response) throw new AppError('RSVP response not found', 404);
+
+    const invitationId = response.invitationId;
+
+    return prisma.$transaction(async (tx) => {
+      if (response.guest.isPlusOne) {
+        // Deleting the guest cascades to their response row.
+        await tx.guest.delete({ where: { id: response.guest.id } });
+      } else {
+        await tx.rsvpResponse.delete({ where: { id: responseId } });
+      }
+
+      const remaining = await tx.rsvpResponse.count({
+        where: { invitationId },
+      });
+      if (remaining === 0) {
+        await tx.invitation.update({
+          where: { id: invitationId },
+          data: { rsvpEmail: null },
+        });
+      }
+
+      return { deletedResponseId: responseId, invitationId, remaining };
+    });
+  }
 }
 
 export default new RsvpService();

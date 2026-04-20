@@ -21,14 +21,14 @@ import {
   Checkbox,
   Tabs,
   Tab,
-  Card,
-  CardContent,
-  CardActions,
   MenuItem,
   Select,
   FormControl,
   InputLabel,
   Stack,
+  Collapse,
+  Tooltip,
+  Autocomplete,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -38,11 +38,11 @@ import {
   DeleteSweep as DeleteSweepIcon,
   SwapHoriz as SwapHorizIcon,
   PersonRemove as PersonRemoveIcon,
-  LocationOn as LocationOnIcon,
-  Phone as PhoneIcon,
-  TableRestaurant as TableRestaurantIcon,
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as RadioButtonUncheckedIcon,
+  KeyboardArrowDown as KeyboardArrowDownIcon,
+  KeyboardArrowRight as KeyboardArrowRightIcon,
+  PersonAdd as PersonAddIcon,
 } from "@mui/icons-material";
 import { colors } from "../../theme";
 
@@ -55,6 +55,7 @@ interface Guest {
   email?: string;
   menuChoice?: string;
   dietaryRestrictions?: string;
+  plusOne?: boolean;
   invitationId?: number;
   invitation?: Invitation;
 }
@@ -72,7 +73,6 @@ interface Invitation {
   inviteSent: boolean;
   tableNumber?: number;
   notes?: string;
-  plusOne: boolean;
   guests: Guest[];
 }
 
@@ -113,6 +113,7 @@ export const GuestListManager = () => {
     email: "",
     dietaryRestrictions: "",
     menuChoice: "",
+    plusOne: false,
   });
 
   // Move guest dialog
@@ -134,7 +135,6 @@ export const GuestListManager = () => {
     inviteSent: false,
     tableNumber: "",
     notes: "",
-    plusOne: false,
   });
 
   useEffect(() => {
@@ -175,6 +175,7 @@ export const GuestListManager = () => {
         email: guest.email || "",
         dietaryRestrictions: guest.dietaryRestrictions || "",
         menuChoice: guest.menuChoice || "",
+        plusOne: !!guest.plusOne,
       });
     } else {
       setEditingGuest(null);
@@ -184,6 +185,7 @@ export const GuestListManager = () => {
         email: "",
         dietaryRestrictions: "",
         menuChoice: "",
+        plusOne: false,
       });
     }
     setGuestDialogOpen(true);
@@ -355,7 +357,6 @@ export const GuestListManager = () => {
       inviteSent: false,
       tableNumber: "",
       notes: "",
-      plusOne: false,
     });
     setGroupDialogOpen(true);
   };
@@ -669,7 +670,36 @@ export const GuestListManager = () => {
             onChange={(e) =>
               setGuestForm({ ...guestForm, menuChoice: e.target.value })
             }
+            sx={{ mb: 2 }}
           />
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              p: 1.5,
+              borderRadius: 1,
+              border: `1px solid ${colors.mushroom}`,
+              backgroundColor: guestForm.plusOne
+                ? colors.warmIvory
+                : "transparent",
+            }}
+          >
+            <Checkbox
+              checked={guestForm.plusOne}
+              onChange={(e) =>
+                setGuestForm({ ...guestForm, plusOne: e.target.checked })
+              }
+            />
+            <Box>
+              <Typography sx={{ color: colors.body, fontWeight: 600 }}>
+                Allow this guest to bring a +1
+              </Typography>
+              <Typography variant="caption" sx={{ color: colors.bodyLight }}>
+                Each guest manages their own plus-one at RSVP time.
+              </Typography>
+            </Box>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseGuestDialog}>Cancel</Button>
@@ -699,43 +729,88 @@ export const GuestListManager = () => {
               ? `Currently assigned to Invitation No. ${movingGuest.invitationId}. Select a new invitation or choose "Unassigned" to remove them from any invitation.`
               : "This guest is currently unassigned. Select an invitation to add them to."}
           </Typography>
-          <FormControl fullWidth sx={{ mt: 1 }}>
-            <InputLabel>Target invitation</InputLabel>
-            <Select
-              value={moveTargetId}
-              label="Target invitation"
-              onChange={(e) => {
-                const val = e.target.value as number | "";
-                setMoveTargetId(val === "" ? "" : Number(val));
-              }}
-            >
-              <MenuItem value="">
-                <em>Unassigned (remove from invitation)</em>
-              </MenuItem>
-              {invitations
-                .filter((inv) => inv.id !== movingGuest?.invitationId)
-                .map((inv) => {
-                  const names = inv.guests
-                    .map((g) => `${g.firstName} ${g.lastName}`)
-                    .join(", ");
-                  const location = [inv.city, inv.state]
-                    .filter(Boolean)
-                    .join(", ");
-                  const label = [
-                    `No. ${inv.id}`,
-                    names || "(no guests)",
-                    location,
-                  ]
-                    .filter(Boolean)
-                    .join(" — ");
-                  return (
-                    <MenuItem key={inv.id} value={inv.id}>
-                      {label}
-                    </MenuItem>
-                  );
-                })}
-            </Select>
-          </FormControl>
+          {(() => {
+            const UNASSIGNED_OPTION = { id: -1 as const };
+            type Option = { id: number } & Partial<Invitation>;
+            const options: Option[] = [
+              UNASSIGNED_OPTION,
+              ...invitations.filter(
+                (inv) => inv.id !== movingGuest?.invitationId,
+              ),
+            ];
+            const selected =
+              moveTargetId === ""
+                ? UNASSIGNED_OPTION
+                : options.find((o) => o.id === moveTargetId) || null;
+            const describe = (opt: Option) => {
+              if (opt.id === -1) return "Unassigned (remove from invitation)";
+              const names =
+                opt.guests
+                  ?.map((g) => `${g.firstName} ${g.lastName}`)
+                  .join(", ") || "(no guests)";
+              const location = [opt.city, opt.state]
+                .filter(Boolean)
+                .join(", ");
+              return [`No. ${opt.id}`, names, location]
+                .filter(Boolean)
+                .join(" — ");
+            };
+            return (
+              <Autocomplete
+                value={selected}
+                options={options}
+                getOptionLabel={describe}
+                isOptionEqualToValue={(a, b) => a.id === b.id}
+                filterOptions={(opts, state) => {
+                  const q = state.inputValue.trim().toLowerCase();
+                  if (!q) return opts;
+                  return opts.filter((opt) => {
+                    if (opt.id === -1) return "unassigned".includes(q);
+                    const haystack = [
+                      `no. ${opt.id}`,
+                      `${opt.id}`,
+                      opt.address,
+                      opt.address2,
+                      opt.city,
+                      opt.state,
+                      opt.zip,
+                      opt.country,
+                      opt.phoneNumber,
+                      opt.notes,
+                      ...(opt.guests?.map(
+                        (g) => `${g.firstName} ${g.lastName} ${g.email || ""}`,
+                      ) || []),
+                    ]
+                      .filter(Boolean)
+                      .join(" ")
+                      .toLowerCase();
+                    return haystack.includes(q);
+                  });
+                }}
+                onChange={(_, val) => {
+                  if (!val || val.id === -1) setMoveTargetId("");
+                  else setMoveTargetId(val.id);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Search invitations by id, address, or guest name"
+                    autoFocus
+                    sx={{ mt: 1 }}
+                  />
+                )}
+                renderOption={(props, opt) => (
+                  <li {...props} key={opt.id}>
+                    {opt.id === -1 ? (
+                      <em>Unassigned (remove from invitation)</em>
+                    ) : (
+                      describe(opt)
+                    )}
+                  </li>
+                )}
+              />
+            );
+          })()}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseMoveDialog}>Cancel</Button>
@@ -854,18 +929,6 @@ export const GuestListManager = () => {
             }
             sx={{ mb: 2 }}
           />
-          <Box sx={{ display: "flex", gap: 2 }}>
-            <Checkbox
-              checked={invitationForm.plusOne}
-              onChange={(e) =>
-                setInvitationForm({
-                  ...invitationForm,
-                  plusOne: e.target.checked,
-                })
-              }
-            />
-            <Typography>Allow Plus One</Typography>
-          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseGroupDialog}>Cancel</Button>
@@ -934,6 +997,9 @@ const GuestTable = ({
               Dietary Restrictions
             </TableCell>
             <TableCell sx={{ fontWeight: "bold" }}>Invitation</TableCell>
+            <TableCell sx={{ fontWeight: "bold" }} align="center">
+              +1
+            </TableCell>
             <TableCell sx={{ fontWeight: "bold" }}>Actions</TableCell>
           </TableRow>
         </TableHead>
@@ -956,12 +1022,27 @@ const GuestTable = ({
               <TableCell>
                 {guest.invitationId ? (
                   <Chip
-                    label={`Invitation #${guest.invitationId}`}
+                    label={`No. ${guest.invitationId}`}
                     size="small"
                     color="success"
                   />
                 ) : (
                   <Chip label="Unassigned" size="small" />
+                )}
+              </TableCell>
+              <TableCell align="center">
+                {guest.plusOne ? (
+                  <Chip
+                    size="small"
+                    label="+1"
+                    sx={{
+                      backgroundColor: colors.dustyRose,
+                      color: colors.heading,
+                      fontWeight: 700,
+                    }}
+                  />
+                ) : (
+                  "—"
                 )}
               </TableCell>
               <TableCell>
@@ -1024,6 +1105,11 @@ const InvitationCardGrid = ({
   onUnassignGuest,
   onRefresh,
 }: InvitationCardGridProps) => {
+  const [selectedInvitationIds, setSelectedInvitationIds] = useState<number[]>(
+    [],
+  );
+  const [expandedIds, setExpandedIds] = useState<number[]>([]);
+
   if (totalCount === 0) {
     return <Alert severity="info">No invitations created yet.</Alert>;
   }
@@ -1056,283 +1142,423 @@ const InvitationCardGrid = ({
     }
   };
 
-  const formatAddress = (inv: Invitation) => {
-    const line1 = [inv.address, inv.address2].filter(Boolean).join(", ");
-    const line2 = [
+  const handleBulkDelete = async () => {
+    if (selectedInvitationIds.length === 0) return;
+    if (
+      !confirm(
+        `Delete ${selectedInvitationIds.length} invitation(s)? All guests in these invitations will also be deleted.`,
+      )
+    ) {
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/invitations/bulk-delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invitationIds: selectedInvitationIds }),
+      });
+      if (!response.ok) throw new Error("Failed to bulk delete invitations");
+      setSelectedInvitationIds([]);
+      await onRefresh();
+    } catch (err) {
+      alert(
+        err instanceof Error ? err.message : "Failed to delete invitations",
+      );
+    }
+  };
+
+  const formatAddressLine = (inv: Invitation) => {
+    const street = [inv.address, inv.address2].filter(Boolean).join(", ");
+    const local = [
       inv.city,
       [inv.state, inv.zip].filter(Boolean).join(" "),
     ]
       .filter(Boolean)
       .join(", ");
-    return { line1, line2 };
+    return [street, local].filter(Boolean).join(" · ") || "—";
+  };
+
+  const visibleIds = invitations.map((i) => i.id);
+  const allSelected =
+    visibleIds.length > 0 &&
+    visibleIds.every((id) => selectedInvitationIds.includes(id));
+  const someSelected =
+    visibleIds.some((id) => selectedInvitationIds.includes(id)) && !allSelected;
+
+  const toggleSelect = (id: number) => {
+    setSelectedInvitationIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedInvitationIds((prev) =>
+        prev.filter((id) => !visibleIds.includes(id)),
+      );
+    } else {
+      setSelectedInvitationIds((prev) => [
+        ...prev.filter((id) => !visibleIds.includes(id)),
+        ...visibleIds,
+      ]);
+    }
+  };
+
+  const toggleExpand = (id: number) => {
+    setExpandedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
   };
 
   return (
-    <Box
-      sx={{
-        display: "grid",
-        gridTemplateColumns: {
-          xs: "1fr",
-          md: "repeat(2, 1fr)",
-          lg: "repeat(3, 1fr)",
-        },
-        gap: 2.5,
-      }}
-    >
-      {invitations.map((invitation) => {
-        const { line1, line2 } = formatAddress(invitation);
-        return (
-          <Card
-            key={invitation.id}
-            sx={{
-              height: "100%",
-              display: "flex",
-              flexDirection: "column",
-              borderTop: `4px solid ${colors.olive}`,
-              backgroundColor: colors.warmIvory,
-            }}
-          >
-            <CardContent sx={{ flexGrow: 1, pb: 1 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  mb: 1,
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontFamily: "'Kabel', sans-serif",
-                    fontWeight: 600,
-                    fontSize: "1rem",
-                    color: colors.heading,
-                    letterSpacing: "0.04em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Invitation&nbsp;No.&nbsp;{invitation.id}
-                </Typography>
-                {invitation.tableNumber && (
-                  <Chip
-                    icon={<TableRestaurantIcon />}
-                    label={`Table ${invitation.tableNumber}`}
-                    size="small"
-                    sx={{
-                      backgroundColor: colors.sage,
-                      color: colors.heading,
-                      fontWeight: 600,
-                    }}
-                  />
-                )}
-              </Box>
+    <Box>
+      {selectedInvitationIds.length > 0 && (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
+            p: 1.5,
+            backgroundColor: colors.warmIvory,
+            borderRadius: 1,
+            border: `1px solid ${colors.mushroom}`,
+          }}
+        >
+          <Typography variant="body2" sx={{ color: colors.body }}>
+            {selectedInvitationIds.length} invitation(s) selected
+          </Typography>
+          <Stack direction="row" spacing={1}>
+            <Button
+              size="small"
+              onClick={() => setSelectedInvitationIds([])}
+              sx={{ color: colors.body }}
+            >
+              Clear
+            </Button>
+            <Button
+              size="small"
+              variant="contained"
+              startIcon={<DeleteSweepIcon />}
+              onClick={handleBulkDelete}
+              sx={{
+                backgroundColor: colors.burntSienna,
+                "&:hover": { backgroundColor: colors.terracotta },
+              }}
+            >
+              Delete Selected
+            </Button>
+          </Stack>
+        </Box>
+      )}
 
-              {(line1 || line2) && (
-                <Box sx={{ display: "flex", gap: 1, mb: 0.5 }}>
-                  <LocationOnIcon
-                    fontSize="small"
-                    sx={{ color: colors.olive, mt: "2px" }}
-                  />
-                  <Box>
-                    {line1 && (
-                      <Typography variant="body2" sx={{ color: colors.body }}>
-                        {line1}
-                      </Typography>
-                    )}
-                    {line2 && (
-                      <Typography variant="body2" sx={{ color: colors.body }}>
-                        {line2}
-                      </Typography>
-                    )}
-                  </Box>
-                </Box>
-              )}
-
-              {invitation.phoneNumber && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    mb: 0.5,
-                  }}
-                >
-                  <PhoneIcon fontSize="small" sx={{ color: colors.olive }} />
-                  <Typography variant="body2" sx={{ color: colors.body }}>
-                    {invitation.phoneNumber}
-                  </Typography>
-                </Box>
-              )}
-
-              <Stack
-                direction="row"
-                spacing={1}
-                sx={{ mt: 1.5, mb: 1, flexWrap: "wrap", gap: 0.5 }}
-              >
-                <Chip
-                  size="small"
-                  icon={
-                    invitation.saveTheDateSent ? (
-                      <CheckCircleIcon />
-                    ) : (
-                      <RadioButtonUncheckedIcon />
-                    )
-                  }
-                  label="STD"
-                  variant={invitation.saveTheDateSent ? "filled" : "outlined"}
-                  sx={{
-                    backgroundColor: invitation.saveTheDateSent
-                      ? colors.eucalyptus
-                      : "transparent",
-                    color: invitation.saveTheDateSent
-                      ? "#fff"
-                      : colors.body,
-                    borderColor: colors.eucalyptus,
-                  }}
+      <TableContainer>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  checked={allSelected}
+                  indeterminate={someSelected}
+                  onChange={toggleSelectAll}
                 />
-                <Chip
-                  size="small"
-                  icon={
-                    invitation.inviteSent ? (
-                      <CheckCircleIcon />
-                    ) : (
-                      <RadioButtonUncheckedIcon />
-                    )
-                  }
-                  label="Invite"
-                  variant={invitation.inviteSent ? "filled" : "outlined"}
-                  sx={{
-                    backgroundColor: invitation.inviteSent
-                      ? colors.olive
-                      : "transparent",
-                    color: invitation.inviteSent ? "#fff" : colors.body,
-                    borderColor: colors.olive,
-                  }}
-                />
-                {invitation.plusOne && (
-                  <Chip
-                    size="small"
-                    label="+1 Allowed"
-                    sx={{
-                      backgroundColor: colors.dustyRose,
-                      color: colors.heading,
-                    }}
-                  />
-                )}
-              </Stack>
-
-              <Box
-                sx={{
-                  mt: 1.5,
-                  pt: 1.5,
-                  borderTop: `1px dashed ${colors.mushroom}`,
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: colors.body,
-                    fontWeight: 700,
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Guests · {invitation.guests.length}
-                </Typography>
-                {invitation.guests.length === 0 ? (
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: colors.bodyLight,
-                      fontStyle: "italic",
-                      mt: 0.5,
-                    }}
+              </TableCell>
+              <TableCell width="32" />
+              <TableCell sx={{ fontWeight: "bold" }}>No.</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Address</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Guests</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }} align="center">
+                +1
+              </TableCell>
+              <TableCell sx={{ fontWeight: "bold" }} align="center">
+                Table
+              </TableCell>
+              <TableCell sx={{ fontWeight: "bold" }} align="center">
+                STD
+              </TableCell>
+              <TableCell sx={{ fontWeight: "bold" }} align="center">
+                Invite
+              </TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {invitations.map((invitation) => {
+              const isSelected = selectedInvitationIds.includes(invitation.id);
+              const isExpanded = expandedIds.includes(invitation.id);
+              const guestNames = invitation.guests
+                .map(
+                  (g) =>
+                    `${g.firstName} ${g.lastName}${g.plusOne ? " (+1)" : ""}`,
+                )
+                .join(", ");
+              const plusOneCount = invitation.guests.filter(
+                (g) => g.plusOne,
+              ).length;
+              const headcount = invitation.guests.length + plusOneCount;
+              return (
+                <>
+                  <TableRow
+                    key={invitation.id}
+                    hover
+                    selected={isSelected}
+                    sx={{ "& > *": { borderBottom: "unset" } }}
                   >
-                    No guests assigned
-                  </Typography>
-                ) : (
-                  <Box sx={{ mt: 0.5 }}>
-                    {invitation.guests.map((guest) => (
-                      <Box
-                        key={guest.id}
-                        sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          py: 0.25,
-                        }}
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={isSelected}
+                        onChange={() => toggleSelect(invitation.id)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <IconButton
+                        size="small"
+                        onClick={() => toggleExpand(invitation.id)}
+                        title={isExpanded ? "Collapse" : "Expand guests"}
                       >
-                        <Typography variant="body2" sx={{ color: colors.body }}>
-                          {guest.firstName} {guest.lastName}
+                        {isExpanded ? (
+                          <KeyboardArrowDownIcon fontSize="small" />
+                        ) : (
+                          <KeyboardArrowRightIcon fontSize="small" />
+                        )}
+                      </IconButton>
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {invitation.id}
+                    </TableCell>
+                    <TableCell sx={{ maxWidth: 320 }}>
+                      <Typography variant="body2" sx={{ color: colors.body }}>
+                        {formatAddressLine(invitation)}
+                      </Typography>
+                      {invitation.phoneNumber && (
+                        <Typography
+                          variant="caption"
+                          sx={{ color: colors.bodyLight }}
+                        >
+                          {invitation.phoneNumber}
                         </Typography>
-                        <Box sx={{ display: "flex" }}>
-                          <IconButton
-                            size="small"
-                            onClick={() => onEditGuest(guest)}
-                            sx={{ color: colors.olive }}
-                            title="Edit guest"
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => onMoveGuest(guest)}
-                            sx={{ color: colors.eucalyptus }}
-                            title="Move to another invitation"
-                          >
-                            <SwapHorizIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => onUnassignGuest(guest)}
-                            sx={{ color: colors.cognac }}
-                            title="Remove from invitation"
-                          >
-                            <PersonRemoveIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => onDeleteGuest(guest.id)}
-                            sx={{ color: colors.burntSienna }}
-                            title="Delete guest"
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ maxWidth: 260 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: colors.body,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                        title={guestNames}
+                      >
+                        {guestNames || (
+                          <em style={{ color: colors.bodyLight }}>
+                            No guests
+                          </em>
+                        )}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: colors.bodyLight }}
+                      >
+                        {invitation.guests.length} named
+                        {plusOneCount > 0 &&
+                          ` + ${plusOneCount} plus-one${
+                            plusOneCount === 1 ? "" : "s"
+                          } (total ${headcount})`}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      {plusOneCount > 0 ? (
+                        <Chip
+                          size="small"
+                          label={
+                            plusOneCount === 1 ? "+1" : `+${plusOneCount}`
+                          }
+                          sx={{
+                            backgroundColor: colors.dustyRose,
+                            color: colors.heading,
+                            fontWeight: 700,
+                          }}
+                        />
+                      ) : (
+                        <Typography
+                          variant="body2"
+                          sx={{ color: colors.bodyLight }}
+                        >
+                          —
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell align="center">
+                      {invitation.tableNumber ?? "—"}
+                    </TableCell>
+                    <TableCell align="center">
+                      {invitation.saveTheDateSent ? (
+                        <CheckCircleIcon
+                          fontSize="small"
+                          sx={{ color: colors.eucalyptus }}
+                        />
+                      ) : (
+                        <RadioButtonUncheckedIcon
+                          fontSize="small"
+                          sx={{ color: colors.mushroom }}
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell align="center">
+                      {invitation.inviteSent ? (
+                        <CheckCircleIcon
+                          fontSize="small"
+                          sx={{ color: colors.olive }}
+                        />
+                      ) : (
+                        <RadioButtonUncheckedIcon
+                          fontSize="small"
+                          sx={{ color: colors.mushroom }}
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDeleteInvitation(invitation.id)}
+                        sx={{ color: colors.burntSienna }}
+                        title="Delete invitation"
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell
+                      colSpan={10}
+                      sx={{ py: 0, backgroundColor: colors.warmIvory }}
+                    >
+                      <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                        <Box sx={{ py: 2, px: 1 }}>
+                          {invitation.notes && (
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                display: "block",
+                                mb: 1,
+                                fontStyle: "italic",
+                                color: colors.bodyLight,
+                              }}
+                            >
+                              Notes: {invitation.notes}
+                            </Typography>
+                          )}
+                          {invitation.guests.length === 0 ? (
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontStyle: "italic",
+                                color: colors.bodyLight,
+                              }}
+                            >
+                              No guests assigned to this invitation.
+                            </Typography>
+                          ) : (
+                            <Table size="small">
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell sx={{ fontWeight: 600 }}>
+                                    Name
+                                  </TableCell>
+                                  <TableCell
+                                    sx={{ fontWeight: 600 }}
+                                    align="center"
+                                  >
+                                    +1
+                                  </TableCell>
+                                  <TableCell sx={{ fontWeight: 600 }}>
+                                    Email
+                                  </TableCell>
+                                  <TableCell sx={{ fontWeight: 600 }}>
+                                    Dietary
+                                  </TableCell>
+                                  <TableCell sx={{ fontWeight: 600 }}>
+                                    Actions
+                                  </TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {invitation.guests.map((guest) => (
+                                  <TableRow key={guest.id}>
+                                    <TableCell>
+                                      {guest.firstName} {guest.lastName}
+                                    </TableCell>
+                                    <TableCell align="center">
+                                      {guest.plusOne ? (
+                                        <Chip
+                                          size="small"
+                                          label="+1"
+                                          sx={{
+                                            backgroundColor: colors.dustyRose,
+                                            color: colors.heading,
+                                            fontWeight: 700,
+                                          }}
+                                        />
+                                      ) : (
+                                        "—"
+                                      )}
+                                    </TableCell>
+                                    <TableCell>{guest.email || "—"}</TableCell>
+                                    <TableCell>
+                                      {guest.dietaryRestrictions || "—"}
+                                    </TableCell>
+                                    <TableCell>
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => onEditGuest(guest)}
+                                        sx={{ color: colors.olive }}
+                                        title="Edit guest"
+                                      >
+                                        <EditIcon fontSize="small" />
+                                      </IconButton>
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => onMoveGuest(guest)}
+                                        sx={{ color: colors.eucalyptus }}
+                                        title="Move to another invitation"
+                                      >
+                                        <SwapHorizIcon fontSize="small" />
+                                      </IconButton>
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => onUnassignGuest(guest)}
+                                        sx={{ color: colors.cognac }}
+                                        title="Remove from invitation"
+                                      >
+                                        <PersonRemoveIcon fontSize="small" />
+                                      </IconButton>
+                                      <IconButton
+                                        size="small"
+                                        onClick={() =>
+                                          onDeleteGuest(guest.id)
+                                        }
+                                        sx={{ color: colors.burntSienna }}
+                                        title="Delete guest"
+                                      >
+                                        <DeleteIcon fontSize="small" />
+                                      </IconButton>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          )}
                         </Box>
-                      </Box>
-                    ))}
-                  </Box>
-                )}
-              </Box>
-
-              {invitation.notes && (
-                <Typography
-                  variant="caption"
-                  sx={{
-                    mt: 1.5,
-                    display: "block",
-                    fontStyle: "italic",
-                    color: colors.bodyLight,
-                  }}
-                >
-                  “{invitation.notes}”
-                </Typography>
-              )}
-            </CardContent>
-
-            <CardActions sx={{ borderTop: `1px solid ${colors.mushroom}` }}>
-              <Button
-                size="small"
-                startIcon={<DeleteIcon />}
-                onClick={() => handleDeleteInvitation(invitation.id)}
-                sx={{ color: colors.burntSienna }}
-              >
-                Delete Invitation
-              </Button>
-            </CardActions>
-          </Card>
-        );
-      })}
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>
+                </>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Box>
   );
 };

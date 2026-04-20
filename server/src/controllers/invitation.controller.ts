@@ -75,6 +75,25 @@ export class InvitationController {
     }
   }
 
+  // POST /api/invitations/bulk-delete
+  async bulkDelete(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { invitationIds } = req.body as { invitationIds: number[] };
+
+      if (!invitationIds || !Array.isArray(invitationIds) || invitationIds.length === 0) {
+        throw new AppError('invitationIds array is required', 400);
+      }
+
+      await invitationService.bulkDeleteInvitations(invitationIds);
+      res.json({
+        success: true,
+        message: `${invitationIds.length} invitation(s) deleted successfully`,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   // DELETE /api/invitations/:id
   async delete(req: Request, res: Response, next: NextFunction) {
     try {

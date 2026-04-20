@@ -198,6 +198,59 @@ export class RsvpController {
     }
   }
 
+  // PATCH /api/rsvp/admin/response/:id
+  async adminUpdateResponse(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = parseInt(req.params.id);
+      if (!Number.isFinite(id)) throw new AppError('Invalid response id', 400);
+
+      const body = req.body as Record<string, unknown>;
+      const patch: {
+        isAttending?: boolean;
+        dietaryRestrictions?: string | null;
+      } = {};
+
+      if (body.isAttending !== undefined) {
+        if (typeof body.isAttending !== 'boolean') {
+          throw new AppError('isAttending must be a boolean', 400);
+        }
+        patch.isAttending = body.isAttending;
+      }
+      if (body.dietaryRestrictions !== undefined) {
+        if (body.dietaryRestrictions === null) {
+          patch.dietaryRestrictions = null;
+        } else if (typeof body.dietaryRestrictions === 'string') {
+          const trimmed = body.dietaryRestrictions.trim();
+          patch.dietaryRestrictions = trimmed.length === 0 ? null : trimmed;
+        } else {
+          throw new AppError('dietaryRestrictions must be string or null', 400);
+        }
+      }
+
+      if (Object.keys(patch).length === 0) {
+        throw new AppError('Nothing to update', 400);
+      }
+
+      const updated = await rsvpService.adminUpdateResponse(id, patch);
+      res.json({ success: true, data: updated });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // DELETE /api/rsvp/admin/response/:id
+  async adminDeleteResponse(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = parseInt(req.params.id);
+      if (!Number.isFinite(id)) throw new AppError('Invalid response id', 400);
+
+      const result = await rsvpService.adminDeleteResponse(id);
+      res.json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async updateByEditToken(req: Request, res: Response, next: NextFunction) {
     try {
       const body = req.body as Record<string, unknown>;

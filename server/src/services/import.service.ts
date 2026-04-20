@@ -16,6 +16,7 @@ export interface CsvRow {
   tableNumber?: string;
   dietaryRestrictions?: string;
   notes?: string;
+  numberOfGuests?: string;
 }
 
 export class ImportService {
@@ -57,6 +58,18 @@ export class ImportService {
    * Automatically creates invitations for unique addresses
    * Groups guests with the same address into the same invitation
    */
+  private buildAddressKey(row: CsvRow): string {
+    return [
+      row.address1?.trim().toLowerCase() || '',
+      row.address2?.trim().toLowerCase() || '',
+      row.city?.trim().toLowerCase() || '',
+      row.state?.trim().toLowerCase() || '',
+      row.zipCode?.trim() || '',
+    ]
+      .filter(Boolean)
+      .join('|');
+  }
+
   async importGuestsFromCsv(rows: CsvRow[]) {
     const results = {
       success: [] as any[],
@@ -78,16 +91,7 @@ export class ImportService {
 
         const { firstName, lastName } = this.parseGuestName(row.guestName);
 
-        // Create address key for grouping (normalize to handle slight variations)
-        const addressKey = [
-          row.address1?.trim().toLowerCase() || '',
-          row.address2?.trim().toLowerCase() || '',
-          row.city?.trim().toLowerCase() || '',
-          row.state?.trim().toLowerCase() || '',
-          row.zipCode?.trim() || '',
-        ]
-          .filter(Boolean)
-          .join('|');
+        const addressKey = this.buildAddressKey(row);
 
         let invitationId: number | null = null;
 
@@ -119,6 +123,11 @@ export class ImportService {
           }
         }
 
+        // Plus-one is per-guest: "# of guests" == 2 → this named guest can
+        // bring a +1. Two rows at the same address can each carry their own +1.
+        const guestHeadcount = parseInt(row.numberOfGuests || '') || 0;
+        const plusOne = guestHeadcount >= 2;
+
         // Create guest
         const guest = await prisma.guest.create({
           data: {
@@ -128,6 +137,7 @@ export class ImportService {
             dietaryRestrictions: row.dietaryRestrictions || null,
             menuChoice: null, // Placeholder for future
             invitationId,
+            plusOne,
           },
         });
 
