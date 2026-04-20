@@ -32,7 +32,8 @@ jobs:
         working-directory: ./client
         run: npm run build
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          # VITE_API_URL intentionally unset - frontend uses relative /api
+          # which nginx proxies to the backend on the same origin
           VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD }}
 
       - name: Install backend dependencies

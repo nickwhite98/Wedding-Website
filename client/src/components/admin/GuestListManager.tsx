@@ -222,7 +222,11 @@ export const GuestListManager = () => {
   const handleBulkDelete = async () => {
     if (selectedGuests.length === 0) return;
 
-    if (!confirm(`Are you sure you want to delete ${selectedGuests.length} guest(s)?`)) {
+    if (
+      !confirm(
+        `Are you sure you want to delete ${selectedGuests.length} guest(s)?`,
+      )
+    ) {
       return;
     }
 
@@ -246,7 +250,7 @@ export const GuestListManager = () => {
     setSelectedGuests((prev) =>
       prev.includes(guestId)
         ? prev.filter((id) => id !== guestId)
-        : [...prev, guestId]
+        : [...prev, guestId],
     );
   };
 
@@ -294,22 +298,19 @@ export const GuestListManager = () => {
 
   const handleCreateInvitation = async () => {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/import/assign-invitation`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            guestIds: selectedGuests,
-            invitationData: {
-              ...invitationForm,
-              tableNumber: invitationForm.tableNumber
-                ? parseInt(invitationForm.tableNumber)
-                : null,
-            },
-          }),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/import/assign-invitation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          guestIds: selectedGuests,
+          invitationData: {
+            ...invitationForm,
+            tableNumber: invitationForm.tableNumber
+              ? parseInt(invitationForm.tableNumber)
+              : null,
+          },
+        }),
+      });
 
       if (!response.ok) throw new Error("Failed to create invitation");
 
@@ -318,7 +319,7 @@ export const GuestListManager = () => {
       handleCloseGroupDialog();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to create invitation"
+        err instanceof Error ? err.message : "Failed to create invitation",
       );
     }
   };
@@ -332,7 +333,7 @@ export const GuestListManager = () => {
       filtered = filtered.filter((g) =>
         `${g.firstName} ${g.lastName} ${g.email || ""}`
           .toLowerCase()
-          .includes(searchTerm.toLowerCase())
+          .includes(searchTerm.toLowerCase()),
       );
     }
 
@@ -358,7 +359,9 @@ export const GuestListManager = () => {
     return filtered;
   };
 
-  const unassignedGuests = filterAndSortGuests(guests.filter((g) => !g.invitationId));
+  const unassignedGuests = filterAndSortGuests(
+    guests.filter((g) => !g.invitationId),
+  );
   const allGuests = filterAndSortGuests(guests);
 
   if (loading) {
@@ -517,9 +520,7 @@ export const GuestListManager = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>
-          {editingGuest ? "Edit Guest" : "Add Guest"}
-        </DialogTitle>
+        <DialogTitle>{editingGuest ? "Edit Guest" : "Add Guest"}</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
@@ -739,7 +740,8 @@ const GuestTable = ({
   }
 
   const allSelected = guests.every((g) => selectedGuests.includes(g.id));
-  const someSelected = guests.some((g) => selectedGuests.includes(g.id)) && !allSelected;
+  const someSelected =
+    guests.some((g) => selectedGuests.includes(g.id)) && !allSelected;
 
   return (
     <TableContainer>
@@ -757,7 +759,9 @@ const GuestTable = ({
             )}
             <TableCell sx={{ fontWeight: "bold" }}>Name</TableCell>
             <TableCell sx={{ fontWeight: "bold" }}>Email</TableCell>
-            <TableCell sx={{ fontWeight: "bold" }}>Dietary Restrictions</TableCell>
+            <TableCell sx={{ fontWeight: "bold" }}>
+              Dietary Restrictions
+            </TableCell>
             <TableCell sx={{ fontWeight: "bold" }}>Invitation</TableCell>
             <TableCell sx={{ fontWeight: "bold" }}>Actions</TableCell>
           </TableRow>
@@ -830,7 +834,11 @@ const InvitationCardGrid = ({
   }
 
   const handleDeleteInvitation = async (id: number) => {
-    if (!confirm("Are you sure? This will delete the invitation and unassign all guests.")) {
+    if (
+      !confirm(
+        "Are you sure? This will delete the invitation and unassign all guests.",
+      )
+    ) {
       return;
     }
 
@@ -846,7 +854,17 @@ const InvitationCardGrid = ({
   };
 
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }, gap: 2 }}>
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "1fr",
+          md: "repeat(2, 1fr)",
+          lg: "repeat(3, 1fr)",
+        },
+        gap: 2,
+      }}
+    >
       {invitations.map((invitation) => (
         <Box key={invitation.id}>
           <Card
@@ -863,15 +881,13 @@ const InvitationCardGrid = ({
               </Typography>
 
               <Typography variant="body2" sx={{ mb: 1 }}>
-                <strong>Address:</strong>{" "}
-                {invitation.address || "No address"}
+                <strong>Address:</strong> {invitation.address || "No address"}
                 {invitation.address2 && `, ${invitation.address2}`}
               </Typography>
 
               <Typography variant="body2" sx={{ mb: 1 }}>
-                <strong>Location:</strong>{" "}
-                {invitation.city || "-"}, {invitation.state || "-"}{" "}
-                {invitation.zip || ""}
+                <strong>Location:</strong> {invitation.city || "-"},{" "}
+                {invitation.state || "-"} {invitation.zip || ""}
               </Typography>
 
               {invitation.phoneNumber && (
@@ -918,7 +934,12 @@ const InvitationCardGrid = ({
               </Box>
 
               {invitation.plusOne && (
-                <Chip label="Plus One Allowed" size="small" color="success" sx={{ mt: 1 }} />
+                <Chip
+                  label="Plus One Allowed"
+                  size="small"
+                  color="success"
+                  sx={{ mt: 1 }}
+                />
               )}
 
               {invitation.tableNumber && (
@@ -928,7 +949,10 @@ const InvitationCardGrid = ({
               )}
 
               {invitation.notes && (
-                <Typography variant="caption" sx={{ mt: 1, display: "block", fontStyle: "italic" }}>
+                <Typography
+                  variant="caption"
+                  sx={{ mt: 1, display: "block", fontStyle: "italic" }}
+                >
                   {invitation.notes}
                 </Typography>
               )}
