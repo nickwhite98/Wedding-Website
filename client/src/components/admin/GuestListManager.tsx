@@ -39,6 +39,8 @@ import {
 } from "@mui/icons-material";
 import { colors } from "../../theme";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+
 interface Guest {
   id: number;
   firstName: string;
@@ -131,8 +133,8 @@ export const GuestListManager = () => {
     try {
       setLoading(true);
       const [guestsRes, invitationsRes] = await Promise.all([
-        fetch("http://localhost:3001/api/guests"),
-        fetch("http://localhost:3001/api/invitations"),
+        fetch(`${API_BASE_URL}/guests`),
+        fetch(`${API_BASE_URL}/invitations`),
       ]);
 
       if (!guestsRes.ok || !invitationsRes.ok) {
@@ -183,8 +185,8 @@ export const GuestListManager = () => {
   const handleSaveGuest = async () => {
     try {
       const url = editingGuest
-        ? `http://localhost:3001/api/guests/${editingGuest.id}`
-        : "http://localhost:3001/api/guests";
+        ? `${API_BASE_URL}/guests/${editingGuest.id}`
+        : `${API_BASE_URL}/guests`;
 
       const method = editingGuest ? "PUT" : "POST";
 
@@ -207,7 +209,7 @@ export const GuestListManager = () => {
     if (!confirm("Are you sure you want to delete this guest?")) return;
 
     try {
-      const response = await fetch(`http://localhost:3001/api/guests/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/guests/${id}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete guest");
@@ -225,7 +227,7 @@ export const GuestListManager = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:3001/api/guests/bulk-delete", {
+      const response = await fetch(`${API_BASE_URL}/guests/bulk-delete`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ guestIds: selectedGuests }),
@@ -293,7 +295,7 @@ export const GuestListManager = () => {
   const handleCreateInvitation = async () => {
     try {
       const response = await fetch(
-        "http://localhost:3001/api/import/assign-invitation",
+        `${API_BASE_URL}/import/assign-invitation`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -833,7 +835,7 @@ const InvitationCardGrid = ({
     }
 
     try {
-      const response = await fetch(`http://localhost:3001/api/invitations/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/invitations/${id}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete invitation");
