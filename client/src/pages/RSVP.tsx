@@ -27,6 +27,7 @@ import {
   type PlusOnePayload,
 } from "../services/rsvp.service";
 import { Link as MuiLink } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
 import { DietaryPicker } from "../components/DietaryPicker";
 
 type Step = "search" | "verify" | "form" | "done";
@@ -265,11 +266,13 @@ export const RSVP = () => {
               onChange={(e) => setQuery(e.target.value)}
               autoFocus
             />
-            <Alert severity="info" variant="outlined">
-              Plus-ones are offered on an individual basis. If the "Bringing a plus-one" option
-              isn't shown next to your name on the next screen, we weren't able to accommodate an
-              additional guest for you. Thank you for understanding.
-            </Alert>
+            <Typography variant="body2" color="text.secondary" align="center">
+              Questions about plus-ones, dress code, or what to expect?{" "}
+              <MuiLink component={RouterLink} to="/faq" underline="hover">
+                See our FAQ
+              </MuiLink>
+              .
+            </Typography>
             {searching && <CircularProgress size={24} sx={{ alignSelf: "center" }} />}
             {searchError && <Alert severity="error">{searchError}</Alert>}
             {!searching && query.trim().length >= 2 && results.length === 0 && !searchError && (

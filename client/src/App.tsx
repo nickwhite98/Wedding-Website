@@ -13,6 +13,7 @@ import { RSVP } from "./pages/RSVP";
 import { RsvpEdit } from "./pages/RsvpEdit";
 import { Photos } from "./pages/Photos";
 import { Admin } from "./pages/Admin";
+import { FAQ } from "./pages/FAQ";
 import { useKonamiCode } from "./hooks/useKonamiCode";
 
 const AppContent = () => {
@@ -40,6 +41,7 @@ const AppContent = () => {
           <Route path="/travel" element={<Travel />} />
           <Route path="/venue" element={<Venue />} />
           <Route path="/registry" element={<Registry />} />
+          <Route path="/faq" element={<FAQ />} />
           {/* Hidden routes - not in nav but still accessible */}
           <Route path="/story" element={<Story />} />
           <Route path="/details" element={<Details />} />

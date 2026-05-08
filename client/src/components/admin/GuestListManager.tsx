@@ -37,6 +37,7 @@ import {
   DeleteSweep as DeleteSweepIcon,
   SwapHoriz as SwapHorizIcon,
   PersonRemove as PersonRemoveIcon,
+  PersonAdd as PersonAddIcon,
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as RadioButtonUncheckedIcon,
   KeyboardArrowDown as KeyboardArrowDownIcon,
@@ -134,6 +135,32 @@ export const GuestListManager = () => {
     tableNumber: "",
     notes: "",
   });
+
+  // Create blank invitation dialog
+  const [createInvitationDialogOpen, setCreateInvitationDialogOpen] =
+    useState(false);
+  const [newInvitationForm, setNewInvitationForm] = useState({
+    address: "",
+    address2: "",
+    city: "",
+    state: "",
+    zip: "",
+    country: "",
+    phoneNumber: "",
+    saveTheDateSent: false,
+    inviteSent: false,
+    tableNumber: "",
+    notes: "",
+  });
+  const [creatingInvitation, setCreatingInvitation] = useState(false);
+
+  // Add existing guests to invitation dialog
+  const [addExistingDialogOpen, setAddExistingDialogOpen] = useState(false);
+  const [addExistingTargetId, setAddExistingTargetId] = useState<number | null>(
+    null,
+  );
+  const [addExistingSelected, setAddExistingSelected] = useState<Guest[]>([]);
+  const [addingExisting, setAddingExisting] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -363,6 +390,102 @@ export const GuestListManager = () => {
     setGroupDialogOpen(false);
   };
 
+  const handleOpenCreateInvitationDialog = () => {
+    setNewInvitationForm({
+      address: "",
+      address2: "",
+      city: "",
+      state: "",
+      zip: "",
+      country: "",
+      phoneNumber: "",
+      saveTheDateSent: false,
+      inviteSent: false,
+      tableNumber: "",
+      notes: "",
+    });
+    setCreateInvitationDialogOpen(true);
+  };
+
+  const handleCloseCreateInvitationDialog = () => {
+    setCreateInvitationDialogOpen(false);
+  };
+
+  const handleOpenAddExistingDialog = (invitationId: number) => {
+    setAddExistingTargetId(invitationId);
+    setAddExistingSelected([]);
+    setAddExistingDialogOpen(true);
+  };
+
+  const handleCloseAddExistingDialog = () => {
+    setAddExistingDialogOpen(false);
+    setAddExistingTargetId(null);
+    setAddExistingSelected([]);
+  };
+
+  const handleConfirmAddExisting = async () => {
+    if (addExistingTargetId === null || addExistingSelected.length === 0) return;
+    try {
+      setAddingExisting(true);
+      await Promise.all(
+        addExistingSelected.map((g) =>
+          fetch(`${API_BASE_URL}/guests/${g.id}/assign`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ invitationId: addExistingTargetId }),
+          }).then((res) => {
+            if (!res.ok) throw new Error(`Failed to assign ${g.firstName} ${g.lastName}`);
+          }),
+        ),
+      );
+      await fetchData();
+      handleCloseAddExistingDialog();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add guests");
+    } finally {
+      setAddingExisting(false);
+    }
+  };
+
+  const handleCreateBlankInvitation = async () => {
+    try {
+      setCreatingInvitation(true);
+      const payload: Record<string, unknown> = {
+        address: newInvitationForm.address || null,
+        address2: newInvitationForm.address2 || null,
+        city: newInvitationForm.city || null,
+        state: newInvitationForm.state || null,
+        zip: newInvitationForm.zip || null,
+        country: newInvitationForm.country || null,
+        phoneNumber: newInvitationForm.phoneNumber || null,
+        saveTheDateSent: newInvitationForm.saveTheDateSent,
+        inviteSent: newInvitationForm.inviteSent,
+        tableNumber: newInvitationForm.tableNumber
+          ? parseInt(newInvitationForm.tableNumber)
+          : null,
+        notes: newInvitationForm.notes || null,
+      };
+
+      const response = await fetch(`${API_BASE_URL}/invitations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error("Failed to create invitation");
+
+      await fetchData();
+      setCurrentTab(1);
+      handleCloseCreateInvitationDialog();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to create invitation",
+      );
+    } finally {
+      setCreatingInvitation(false);
+    }
+  };
+
   const handleCreateInvitation = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/import/assign-invitation`, {
@@ -501,6 +624,17 @@ export const GuestListManager = () => {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
+            onClick={handleOpenCreateInvitationDialog}
+            sx={{
+              backgroundColor: colors.eucalyptus,
+              "&:hover": { backgroundColor: colors.sage },
+            }}
+          >
+            Add Invitation
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
             onClick={() => handleOpenGuestDialog()}
             sx={{
               backgroundColor: colors.olive,
@@ -591,10 +725,14 @@ export const GuestListManager = () => {
         <InvitationCardGrid
           invitations={filteredInvitations}
           totalCount={invitations.length}
+          unassignedGuestCount={
+            guests.filter((g) => !g.invitationId).length
+          }
           onEditGuest={handleOpenGuestDialog}
           onDeleteGuest={handleDeleteGuest}
           onMoveGuest={handleOpenMoveDialog}
           onUnassignGuest={handleUnassignGuest}
+          onAddExistingGuests={handleOpenAddExistingDialog}
           onRefresh={fetchData}
         />
       </TabPanel>
@@ -939,6 +1077,237 @@ export const GuestListManager = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Create Blank Invitation Dialog */}
+      <Dialog
+        open={createInvitationDialogOpen}
+        onClose={handleCloseCreateInvitationDialog}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Create New Invitation</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2, color: colors.body }}>
+            Creates a blank invitation. You can assign existing unassigned
+            guests, or add new guests, once it exists.
+          </Typography>
+
+          <TextField
+            fullWidth
+            label="Address"
+            value={newInvitationForm.address}
+            onChange={(e) =>
+              setNewInvitationForm({
+                ...newInvitationForm,
+                address: e.target.value,
+              })
+            }
+            sx={{ mb: 2, mt: 1 }}
+          />
+          <TextField
+            fullWidth
+            label="Address 2 (optional)"
+            value={newInvitationForm.address2}
+            onChange={(e) =>
+              setNewInvitationForm({
+                ...newInvitationForm,
+                address2: e.target.value,
+              })
+            }
+            sx={{ mb: 2 }}
+          />
+          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+            <TextField
+              label="City"
+              value={newInvitationForm.city}
+              onChange={(e) =>
+                setNewInvitationForm({
+                  ...newInvitationForm,
+                  city: e.target.value,
+                })
+              }
+              sx={{ flex: 2 }}
+            />
+            <TextField
+              label="State"
+              value={newInvitationForm.state}
+              onChange={(e) =>
+                setNewInvitationForm({
+                  ...newInvitationForm,
+                  state: e.target.value,
+                })
+              }
+              sx={{ flex: 1 }}
+            />
+            <TextField
+              label="ZIP"
+              value={newInvitationForm.zip}
+              onChange={(e) =>
+                setNewInvitationForm({
+                  ...newInvitationForm,
+                  zip: e.target.value,
+                })
+              }
+              sx={{ flex: 1 }}
+            />
+          </Box>
+          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+            <TextField
+              label="Country (optional)"
+              value={newInvitationForm.country}
+              onChange={(e) =>
+                setNewInvitationForm({
+                  ...newInvitationForm,
+                  country: e.target.value,
+                })
+              }
+              sx={{ flex: 1 }}
+            />
+            <TextField
+              label="Phone Number (optional)"
+              value={newInvitationForm.phoneNumber}
+              onChange={(e) =>
+                setNewInvitationForm({
+                  ...newInvitationForm,
+                  phoneNumber: e.target.value,
+                })
+              }
+              sx={{ flex: 1 }}
+            />
+          </Box>
+          <TextField
+            fullWidth
+            label="Table Number (optional)"
+            type="number"
+            value={newInvitationForm.tableNumber}
+            onChange={(e) =>
+              setNewInvitationForm({
+                ...newInvitationForm,
+                tableNumber: e.target.value,
+              })
+            }
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            label="Notes (optional)"
+            multiline
+            rows={3}
+            value={newInvitationForm.notes}
+            onChange={(e) =>
+              setNewInvitationForm({
+                ...newInvitationForm,
+                notes: e.target.value,
+              })
+            }
+            sx={{ mb: 2 }}
+          />
+          <Stack direction="row" spacing={3} sx={{ mt: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Checkbox
+                checked={newInvitationForm.saveTheDateSent}
+                onChange={(e) =>
+                  setNewInvitationForm({
+                    ...newInvitationForm,
+                    saveTheDateSent: e.target.checked,
+                  })
+                }
+              />
+              <Typography sx={{ color: colors.body }}>
+                Save the Date sent
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Checkbox
+                checked={newInvitationForm.inviteSent}
+                onChange={(e) =>
+                  setNewInvitationForm({
+                    ...newInvitationForm,
+                    inviteSent: e.target.checked,
+                  })
+                }
+              />
+              <Typography sx={{ color: colors.body }}>Invite sent</Typography>
+            </Box>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseCreateInvitationDialog}>Cancel</Button>
+          <Button
+            onClick={handleCreateBlankInvitation}
+            variant="contained"
+            disabled={creatingInvitation}
+            sx={{ backgroundColor: colors.olive }}
+          >
+            {creatingInvitation ? "Creating..." : "Create Invitation"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add Existing Guests to Invitation Dialog */}
+      <Dialog
+        open={addExistingDialogOpen}
+        onClose={handleCloseAddExistingDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          {addExistingTargetId !== null
+            ? `Add Guests to Invitation No. ${addExistingTargetId}`
+            : "Add Guests"}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2, color: colors.body }}>
+            Select one or more unassigned guests to attach to this invitation.
+          </Typography>
+          {(() => {
+            const unassigned = guests.filter((g) => !g.invitationId);
+            if (unassigned.length === 0) {
+              return (
+                <Alert severity="info">
+                  No unassigned guests available. Add a guest first, or move
+                  one off another invitation.
+                </Alert>
+              );
+            }
+            return (
+              <Autocomplete
+                multiple
+                value={addExistingSelected}
+                options={unassigned}
+                getOptionLabel={(g) =>
+                  `${g.firstName} ${g.lastName}${g.email ? ` (${g.email})` : ""}`
+                }
+                isOptionEqualToValue={(a, b) => a.id === b.id}
+                onChange={(_, val) => setAddExistingSelected(val)}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Search unassigned guests"
+                    autoFocus
+                    sx={{ mt: 1 }}
+                  />
+                )}
+              />
+            );
+          })()}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseAddExistingDialog}>Cancel</Button>
+          <Button
+            onClick={handleConfirmAddExisting}
+            variant="contained"
+            disabled={addingExisting || addExistingSelected.length === 0}
+            sx={{ backgroundColor: colors.olive }}
+          >
+            {addingExisting
+              ? "Adding..."
+              : `Add ${addExistingSelected.length || ""} guest${
+                  addExistingSelected.length === 1 ? "" : "s"
+                }`.trim()}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
@@ -1087,20 +1456,24 @@ const GuestTable = ({
 interface InvitationCardGridProps {
   invitations: Invitation[];
   totalCount: number;
+  unassignedGuestCount: number;
   onEditGuest: (guest: Guest) => void;
   onDeleteGuest: (id: number) => void;
   onMoveGuest: (guest: Guest) => void;
   onUnassignGuest: (guest: Guest) => void;
+  onAddExistingGuests: (invitationId: number) => void;
   onRefresh: () => void;
 }
 
 const InvitationCardGrid = ({
   invitations,
   totalCount,
+  unassignedGuestCount,
   onEditGuest,
   onDeleteGuest,
   onMoveGuest,
   onUnassignGuest,
+  onAddExistingGuests,
   onRefresh,
 }: InvitationCardGridProps) => {
   const [selectedInvitationIds, setSelectedInvitationIds] = useState<number[]>(
@@ -1419,6 +1792,19 @@ const InvitationCardGrid = ({
                     <TableCell>
                       <IconButton
                         size="small"
+                        onClick={() => onAddExistingGuests(invitation.id)}
+                        disabled={unassignedGuestCount === 0}
+                        sx={{ color: colors.eucalyptus }}
+                        title={
+                          unassignedGuestCount === 0
+                            ? "No unassigned guests available"
+                            : "Add existing guest to this invitation"
+                        }
+                      >
+                        <PersonAddIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
                         onClick={() => handleDeleteInvitation(invitation.id)}
                         sx={{ color: colors.burntSienna }}
                         title="Delete invitation"
@@ -1447,6 +1833,27 @@ const InvitationCardGrid = ({
                               Notes: {invitation.notes}
                             </Typography>
                           )}
+                          <Box sx={{ mb: 1.5 }}>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              startIcon={<PersonAddIcon />}
+                              onClick={() => onAddExistingGuests(invitation.id)}
+                              disabled={unassignedGuestCount === 0}
+                              sx={{
+                                color: colors.olive,
+                                borderColor: colors.olive,
+                                "&:hover": {
+                                  borderColor: colors.eucalyptus,
+                                  backgroundColor: colors.warmIvory,
+                                },
+                              }}
+                            >
+                              {unassignedGuestCount === 0
+                                ? "No unassigned guests available"
+                                : "Add existing guest"}
+                            </Button>
+                          </Box>
                           {invitation.guests.length === 0 ? (
                             <Typography
                               variant="body2"
