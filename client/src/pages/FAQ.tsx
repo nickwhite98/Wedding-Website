@@ -18,6 +18,22 @@ interface FaqItem {
 
 const faqs: FaqItem[] = [
   {
+    id: "dress-code",
+    question: "What's the dress code?",
+    answer: (
+      <>
+        Cocktail to formal attire. Suits for the guys; cocktail dresses or other
+        dressy attire for the ladies. We'd love for everyone to dress up and
+        celebrate with us! Our ceremony and reception will take place outdoors
+        in the woods, with approximately a 5-minute walk from parking to the
+        venue along grass and dirt paths. A shuttle will be available for guests
+        who prefer not to walk. Comfortable footwear like flats or wedges is
+        highly recommended. Since the celebration will continue outdoors into
+        the evening, we also recommend bringing a light layer.
+      </>
+    ),
+  },
+  {
     id: "plus-ones",
     question: "Can I bring a plus-one?",
     answer: (
@@ -30,16 +46,17 @@ const faqs: FaqItem[] = [
     ),
   },
   {
-    id: "dress-code",
-    question: "What's the dress code?",
+    id: "venue-info",
+    question: "What should we know about getting to the venue?",
     answer: (
       <>
-        Cocktail to formal. Suits for the guys, cocktail dresses or formal gowns
-        for the ladies. We're celebrating outdoors on family property, but we'd
-        love for everyone to dress up for the occasion. The ceremony and
-        reception take place on grass, so stilettos aren't your friend. Flats,
-        wedges, or block heels will keep you comfortable (and upright) all
-        night.
+        Our celebration will take place outdoors in a wooded setting on family
+        property. Guests will first drive approximately 5 minutes from the main
+        road into the property to reach parking. From there, the ceremony and
+        reception site is about a 5-minute walk along natural, uneven paths
+        (grass, dirt, and woodchips), or guests may take a shuttle if preferred.
+        We recommend comfortable shoes so you can move easily and enjoy the
+        evening.
       </>
     ),
   },

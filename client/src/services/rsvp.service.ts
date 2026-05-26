@@ -151,7 +151,7 @@ export const rsvpApi = {
   },
 };
 
-export const CONTACT_EMAIL = "nickwhite98@gmail.com";
+export const CONTACT_EMAIL = "kathrynnickwhite@gmail.com";
 
 export const DIETARY_OPTIONS = [
   "Vegetarian",

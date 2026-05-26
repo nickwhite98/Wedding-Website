@@ -60,6 +60,13 @@ class EmailService {
     return process.env.RSVP_NOTIFICATION_EMAIL || undefined;
   }
 
+  private notificationCc(): string[] {
+    return (process.env.RSVP_NOTIFICATION_CC ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+
   private editUrl(token: string): string {
     const base = process.env.APP_URL || 'http://localhost:5173';
     return `${base}/rsvp/edit?token=${encodeURIComponent(token)}`;
@@ -142,6 +149,7 @@ ${notAttendingHtml}
       console.log('[email] RSVP_NOTIFICATION_EMAIL not set, skipping admin notification');
       return;
     }
+    const cc = this.notificationCc();
 
     const verb = params.isEdit ? 'updated their' : 'submitted an';
     const attendingCount = params.attendingNames.length;
@@ -179,6 +187,7 @@ ${notAttendingHtml}
 
     if (!this.client) {
       console.log('[email] Resend not configured. Admin notification would send to:', adminEmail);
+      if (cc.length) console.log('[email] CC:', cc.join(', '));
       console.log('[email] Content:', text);
       return;
     }
@@ -186,6 +195,7 @@ ${notAttendingHtml}
     const result = await this.client.emails.send({
       from: this.from(),
       to: adminEmail,
+      cc: cc.length ? cc : undefined,
       replyTo: this.replyTo(),
       subject: `RSVP ${params.isEdit ? 'updated' : 'received'} for invitation #${params.invitationId}`,
       text,
