@@ -15,9 +15,9 @@ export const Home = () => {
         justifyContent: "center",
         alignItems: "center",
         textAlign: "center",
-        backgroundImage: "url(/homepage.jpeg)",
+        backgroundImage: "url(/Home-2.jpg)",
         backgroundSize: "cover",
-        backgroundPosition: { xs: "45% center", md: "center" },
+        backgroundPosition: { xs: "55% center", md: "60% center" },
         backgroundRepeat: "no-repeat",
         position: "relative",
         "&::before": {
