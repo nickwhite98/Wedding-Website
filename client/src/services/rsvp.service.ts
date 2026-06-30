@@ -34,6 +34,8 @@ export interface EditGuest {
 export interface EditInvitation {
   id: number;
   pastDeadline: boolean;
+  stayingAtHotel: boolean | null;
+  usingShuttle: boolean | null;
   guests: EditGuest[];
 }
 
@@ -57,6 +59,8 @@ export interface SubmitPayload {
   email: string;
   responses: GuestResponsePayload[];
   plusOnes: PlusOnePayload[];
+  stayingAtHotel?: boolean | null;
+  usingShuttle?: boolean | null;
   website?: string;
 }
 
@@ -143,10 +147,18 @@ export const rsvpApi = {
     token: string,
     responses: GuestResponsePayload[],
     plusOnes: PlusOnePayload[],
+    stayingAtHotel?: boolean | null,
+    usingShuttle?: boolean | null,
   ): Promise<void> {
     await request(`/rsvp/edit`, {
       method: "PUT",
-      body: JSON.stringify({ token, responses, plusOnes }),
+      body: JSON.stringify({
+        token,
+        responses,
+        plusOnes,
+        stayingAtHotel,
+        usingShuttle,
+      }),
     });
   },
 };

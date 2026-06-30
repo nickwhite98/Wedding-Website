@@ -66,6 +66,8 @@ export const RsvpEdit = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [invitation, setInvitation] = useState<EditInvitation | null>(null);
   const [guestForm, setGuestForm] = useState<GuestFormState[]>([]);
+  const [stayingAtHotel, setStayingAtHotel] = useState<boolean | null>(null);
+  const [usingShuttle, setUsingShuttle] = useState<boolean | null>(null);
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -84,6 +86,8 @@ export const RsvpEdit = () => {
         const inv = await rsvpApi.getByToken(token);
         if (cancelled) return;
         setInvitation(inv);
+        setStayingAtHotel(inv.stayingAtHotel);
+        setUsingShuttle(inv.usingShuttle);
         const primaries = inv.guests.filter((g) => !g.isPlusOne);
         const plusOnes = inv.guests.filter((g) => g.isPlusOne);
         setGuestForm(
@@ -124,6 +128,11 @@ export const RsvpEdit = () => {
     });
   };
 
+  const anyAttending = useMemo(
+    () => guestForm.some((g) => g.isAttending === true),
+    [guestForm],
+  );
+
   const formValid = useMemo(() => {
     if (!invitation) return false;
     if (guestForm.some((g) => g.isAttending === null)) return false;
@@ -161,7 +170,13 @@ export const RsvpEdit = () => {
           dietaryRestrictions: g.plusOneAttending ? g.plusOneDietary || undefined : undefined,
         }));
 
-      await rsvpApi.updateByToken(token, responses, plusOnes);
+      await rsvpApi.updateByToken(
+        token,
+        responses,
+        plusOnes,
+        anyAttending ? stayingAtHotel : null,
+        anyAttending && stayingAtHotel === true ? usingShuttle : null,
+      );
       setSaved(true);
     } catch (err) {
       const base =
@@ -345,6 +360,83 @@ export const RsvpEdit = () => {
               </CardContent>
             </Card>
           ))}
+
+          {anyAttending && (
+            <Box>
+              <Typography variant="body1" sx={{ mb: 1 }}>
+                Are you staying at the hotel?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                We've reserved a room block at the Comfort Inn & Suites in Gaylord.{" "}
+                <MuiLink href="/travel" target="_blank" rel="noopener noreferrer" underline="hover">
+                  See hotel details &amp; booking info
+                </MuiLink>
+                .
+              </Typography>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  variant={stayingAtHotel === true ? "contained" : "outlined"}
+                  disabled={readOnly}
+                  onClick={() => setStayingAtHotel(true)}
+                >
+                  Yes
+                </Button>
+                <Button
+                  variant={stayingAtHotel === false ? "contained" : "outlined"}
+                  color="secondary"
+                  disabled={readOnly}
+                  onClick={() => {
+                    setStayingAtHotel(false);
+                    setUsingShuttle(null);
+                  }}
+                >
+                  No
+                </Button>
+              </Stack>
+
+              {stayingAtHotel === true && (
+                <Box sx={{ mt: 2.5 }}>
+                  <Typography variant="body1" sx={{ mb: 1 }}>
+                    Do you plan to use the taxi shuttle for transportation to and
+                    from the venue?
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 1.5 }}
+                  >
+                    A complimentary shuttle runs between the hotel and the venue.{" "}
+                    <MuiLink
+                      href="/travel"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      underline="hover"
+                    >
+                      See taxi &amp; shuttle details
+                    </MuiLink>
+                    .
+                  </Typography>
+                  <Stack direction="row" spacing={1}>
+                    <Button
+                      variant={usingShuttle === true ? "contained" : "outlined"}
+                      disabled={readOnly}
+                      onClick={() => setUsingShuttle(true)}
+                    >
+                      Yes
+                    </Button>
+                    <Button
+                      variant={usingShuttle === false ? "contained" : "outlined"}
+                      color="secondary"
+                      disabled={readOnly}
+                      onClick={() => setUsingShuttle(false)}
+                    >
+                      No
+                    </Button>
+                  </Stack>
+                </Box>
+              )}
+            </Box>
+          )}
 
           {saveError && <Alert severity="error">{saveError}</Alert>}
           {saved && <Alert severity="success">Your RSVP has been updated.</Alert>}

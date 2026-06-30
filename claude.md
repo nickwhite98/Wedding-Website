@@ -2,7 +2,10 @@
 
 ## Project Overview
 
-A wedding website built with React (Vite + TypeScript + MUI) frontend and Express + TypeScript backend, featuring RSVP management, photo galleries, and admin controls.
+A wedding website built with a React (Vite + TypeScript + MUI) frontend and an
+Express + TypeScript backend. Features include name-based RSVP with ZIP-code
+verification, an editable RSVP flow via emailed magic links, guest/invitation
+management, CSV guest import, and a password-gated admin panel.
 
 ---
 
@@ -14,20 +17,44 @@ A wedding website built with React (Vite + TypeScript + MUI) frontend and Expres
 - **Language**: TypeScript (strict mode)
 - **UI Library**: Material-UI (MUI) v6
 - **Routing**: React Router v7
+- **Maps**: Leaflet + react-leaflet (venue/travel map)
 - **Styling**: MUI theme system + custom CSS
 - **Fonts**:
-  - Brightwall (local .ttf) - Headings
-  - Kabel (Google Fonts) - Body text & buttons
-  - Cormorant (Google Fonts) - Not currently used
+  - Brightwall (local .ttf) – Headings (`h1`–`h6`)
+  - Kabel (Google Fonts) – Body text & buttons
 
 ### Backend (`/server`)
 
-- **Framework**: Express v5.2.1
-- **Language**: TypeScript v5.9.3
-- **Runtime**: Node.js with tsx for TypeScript execution
-- **Database**: SQLite with Prisma ORM v7.2.0
-- **Authentication**: JWT (jsonwebtoken v9.0.3)
-- **Security**: bcrypt v6.0.0 (installed, not yet used)
+- **Framework**: Express v5
+- **Language**: TypeScript v5
+- **Runtime**: Node.js with `tsx` for TypeScript execution
+- **Database**: SQLite with Prisma ORM v7
+- **Auth tokens**: JWT (jsonwebtoken) — used for RSVP edit magic links (not login)
+- **Email**: Resend (RSVP confirmations + admin notifications)
+- **Rate limiting**: `express-rate-limit` on RSVP endpoints
+
+> Note: `bcrypt` is listed as a dependency but is not currently used. The admin
+> panel is gated by a client-side password only (see Admin Access).
+
+---
+
+## Repository Layout
+
+This is the actual top-level layout. The frontend lives directly in `/client`
+(there is **no** `client/wedding` subfolder).
+
+```
+wedding/
+├── client/                  # React + Vite frontend
+├── server/                  # Express + Prisma backend
+├── scripts/                 # Helper scripts
+├── nginx/                   # Reverse-proxy config for deployment
+├── docker-compose.yml       # Production container setup
+├── DEPLOYMENT.md            # Deployment guide
+├── QUICKSTART.md            # Local setup guide
+├── README.md
+└── claude.md                # This file
+```
 
 ---
 
@@ -35,29 +62,36 @@ A wedding website built with React (Vite + TypeScript + MUI) frontend and Expres
 
 ### Technology
 
-- **Database**: SQLite (file-based at `/server/dev.db`)
-- **ORM**: Prisma v7.2.0
+- **Database**: SQLite (file-based; path from `DATABASE_URL`)
+- **ORM**: Prisma v7
 - **Schema Location**: `/server/prisma/schema.prisma`
-- **Generated Client**: `/server/src/generated/prisma`
+- **Generated Client**: `/server/generated/prisma` (gitignored)
 - **Client Instance**: `/server/src/config/database.ts`
 
 ### Models
 
 #### Invitation
 
-Represents a group of guests (family, couple, or household) that received one invitation.
+A group of guests (family, couple, or household) that received one invitation.
 
 ```prisma
 model Invitation {
-  id           Int            @id @default(autoincrement())
-  primaryEmail String?
-  address      String?
-  city         String?
-  state        String?
-  zip          String?
-  plusOne      Boolean        @default(false)  // Can they bring a +1?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id               Int            @id @default(autoincrement())
+  address          String?
+  address2         String?
+  city             String?
+  state            String?
+  zip              String?
+  country          String?
+  phoneNumber      String?
+  saveTheDateSent  Boolean        @default(false)
+  inviteSent       Boolean        @default(false)
+  tableNumber      Int?
+  notes            String?
+  rsvpEmail        String?        // Set at RSVP submit; used for edit-link verification
+  stayingAtHotel   Boolean?       // Party-level "Are you staying at the hotel?" answer
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 
   guests        Guest[]
   rsvpResponses RsvpResponse[]
@@ -66,49 +100,61 @@ model Invitation {
 
 **Key Points**:
 
-- No invite codes or authentication required
-- `plusOne` flag determines if group can bring an additional guest
-- Contact info is optional but recommended for admin tracking
+- No invite codes. Guests find their invitation by name, then confirm identity
+  with the **ZIP code** the invitation was mailed to.
+- `zip` is required for a guest to verify and RSVP.
+- `rsvpEmail` is captured at submit time and is what the edit magic link checks against.
+- `stayingAtHotel` is per-invitation (the whole party), not per-guest.
 
 #### Guest
 
-Individual person within an invitation group.
+An individual person within an invitation group.
 
 ```prisma
 model Guest {
-  id           Int            @id @default(autoincrement())
-  invitationId Int
-  firstName    String
-  lastName     String
-  email        String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id                  Int            @id @default(autoincrement())
+  invitationId        Int?           // Nullable: unassigned imported guests allowed
+  firstName           String
+  lastName            String
+  email               String?
+  menuChoice          String?
+  dietaryRestrictions String?
+  plusOne             Boolean        @default(false)  // May this guest bring a +1?
+  isPlusOne           Boolean        @default(false)  // Is this guest itself a +1?
+  plusOneForGuestId   Int?           @unique          // Host guest, if this is a +1
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 
-  invitation   Invitation     @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  invitation   Invitation?    @relation(fields: [invitationId], references: [id], onDelete: Cascade)
   rsvpResponse RsvpResponse?
+  plusOneFor   Guest?         @relation("GuestPlusOne", fields: [plusOneForGuestId], references: [id], onDelete: Cascade)
+  plusOneGuest Guest?         @relation("GuestPlusOne")
 
   @@index([invitationId])
-  @@index([firstName])  // For search functionality
-  @@index([lastName])   // For search functionality
+  @@index([firstName])
+  @@index([lastName])
 }
 ```
 
 **Key Points**:
 
-- First/Last name indexes enable fast name-based search
-- Cascade delete: Deleting invitation removes all guests
-- Email is optional (individual contact vs. invitation contact)
-- Plus-one guests are created as regular Guest records when RSVP is submitted
+- First/last name indexes power name-based search.
+- `invitationId` is optional so imported guests can sit unassigned until placed.
+- Plus-ones are real `Guest` rows with `isPlusOne = true` and `plusOneForGuestId`
+  pointing at their host. They are created when an RSVP is submitted and removed
+  if dropped during an edit.
+- Cascade delete: deleting an invitation removes its guests; deleting a host
+  guest removes their plus-one.
 
 #### RsvpResponse
 
-The actual RSVP answer for a specific guest.
+The RSVP answer for a specific guest.
 
 ```prisma
 model RsvpResponse {
   id           Int        @id @default(autoincrement())
   invitationId Int
-  guestId      Int        @unique  // One response per guest
+  guestId      Int        @unique   // One response row per guest
   isAttending  Boolean
   respondedAt  DateTime   @default(now())
   createdAt    DateTime   @default(now())
@@ -123,72 +169,104 @@ model RsvpResponse {
 
 **Key Points**:
 
-- `guestId` is unique - one response per guest, no updates allowed
-- One-time submission model (admin can edit if needed)
-- Cascade delete: Deleting invitation or guest removes responses
+- `guestId` is unique — one response per guest.
+- Responses **are editable**: guests update via the emailed edit link (upsert by
+  `guestId`) before the deadline, and admins can edit/delete in the admin panel.
 
 ---
 
 ## RSVP User Flow
 
-1. **Search**: Guest visits `/rsvp` and types a name (e.g., "Smith")
-2. **Query**: Backend searches `Guest` table for `firstName LIKE '%Smith%' OR lastName LIKE '%Smith%'`
-3. **Display**: Show invitation cards with all guest names from matching invitations
-4. **Select**: User clicks their invitation card
-5. **Form**: Display all guests in the invitation with Yes/No checkboxes for each
-6. **Plus-One**:
-   - If `invitation.plusOne = true`, show "+1 Guest" section
-   - If bringing +1, prompt for: First Name, Last Name, Email (optional)
-   - Backend creates new `Guest` record for +1 associated to same invitation
-7. **Submit**: Create `RsvpResponse` records for all guests (including +1 if applicable)
-8. **Lock**: Responses are final - frontend prevents re-submission (admin can edit via admin panel)
+1. **Search**: Guest visits `/rsvp` and types a first or last name.
+2. **Query**: Backend searches non-plus-one `Guest` rows
+   (`firstName CONTAINS term OR lastName CONTAINS term`) and returns the matching
+   invitations with all party members.
+3. **Select**: User picks their invitation card.
+4. **Verify**: User enters the **ZIP code** the invitation was mailed to. The
+   backend compares it (ignoring any `+4` suffix) against `Invitation.zip`. If the
+   invitation already responded, the UI tells them to use their email edit link.
+5. **Form**: For each primary guest, choose Attending / Unable to attend. Attending
+   guests can set dietary restrictions. Guests flagged `plusOne` can add a +1
+   (first/last name, attendance, dietary).
+6. **Hotel question**: If anyone in the party is attending, show
+   "Are you staying at the hotel?" (Yes/No, optional) with a link to `/travel`.
+   Stored on the invitation as `stayingAtHotel`.
+7. **Email**: A valid email is required. It is saved as `rsvpEmail`.
+8. **Submit**: Creates `RsvpResponse` rows for all guests (+ new `Guest` rows for
+   any plus-ones). Submission is blocked after `RSVP_DEADLINE`.
+9. **Confirmation**: A JWT edit token (180-day expiry) is generated; Resend sends
+   the guest a confirmation with an edit link and notifies the admin.
+10. **Edit**: `/rsvp/edit?token=…` loads the invitation, lets the guest change
+    responses/plus-ones/hotel answer until the deadline, then upserts.
+
+---
+
+## API Routes
+
+All routes are mounted under `/api` (`server/src/index.ts`).
+
+### RSVP (`/api/rsvp`) — rate-limited
+
+- `GET  /search?q=` — search invitations by guest name
+- `POST /verify-zip` — verify ZIP, return invitation + guests
+- `POST /submit` — submit RSVP (sends emails)
+- `GET  /edit?token=` — load invitation for editing
+- `PUT  /edit` — update RSVP via edit token
+- `PATCH  /admin/response/:id` — admin edit a single response
+- `DELETE /admin/response/:id` — admin delete a single response
+
+### Invitations (`/api/invitations`)
+
+- `GET /stats`, `GET /`, `GET /:id`, `POST /`, `POST /bulk-delete`, `PUT /:id`, `DELETE /:id`
+
+### Guests (`/api/guests`)
+
+- `GET /search`, `GET /invitation/:invitationId`, `GET /`, `GET /:id`,
+  `POST /`, `POST /bulk-delete`, `PATCH /:id/assign`, `PUT /:id`, `DELETE /:id`
+
+### Import (`/api/import`)
+
+- `POST /guests`, `GET /unassigned`, `POST /assign-invitation`
+
+> The `/admin/*` and management routes are **not** protected server-side — the
+> admin panel is gated client-side only. Do not expose this server publicly without
+> adding real auth.
 
 ---
 
 ## Database Commands
 
-### Migrations
+Run from `/server`.
 
 ```bash
-# Create and apply a new migration after schema changes
+# Create + apply a migration after schema changes
 npx prisma migrate dev --name <migration_name>
 
 # Apply migrations in production
 npx prisma migrate deploy
 
-# Reset database (WARNING: deletes all data)
-npx prisma migrate reset
-```
-
-### Prisma Client
-
-```bash
-# Generate/regenerate Prisma Client (do this after schema changes)
+# Regenerate the Prisma Client (also run by migrate dev)
 npx prisma generate
 
-# Push schema changes without creating migration (dev only)
+# Push schema without a migration (quick prototyping only)
 npx prisma db push
-```
 
-### Database Management
-
-```bash
-# Open Prisma Studio GUI to view/edit data
+# GUI to view/edit data (http://localhost:5555)
 npx prisma studio
 
-# Validate schema
+# Validate / format the schema
 npx prisma validate
-
-# Format schema file
 npx prisma format
 ```
 
 ### Important Notes
 
-- **Always run `npx prisma generate` after modifying schema** - This updates the TypeScript types
-- **Prisma v7 Config**: Uses `prisma.config.ts` for connection URLs, NOT `url` in schema
-- **Database URL**: Set in `/server/.env` as `DATABASE_URL="file:./dev.db"`
-- **Generated files are gitignored**: `/src/generated/prisma`, `*.db`, `*.db-journal`, `/prisma/migrations`
+- **Always run `npx prisma generate` after editing the schema** to update types.
+  `migrate dev` does this automatically, but a standalone `generate` is sometimes
+  needed before `tsc` picks up new fields.
+- **Prisma v7 config**: connection URL comes from `prisma.config.ts`
+  (`process.env.DATABASE_URL`), **not** a `url` in `schema.prisma`.
+- **Generated client** is written to `/server/generated/prisma` and is gitignored.
 
 ---
 
@@ -196,73 +274,94 @@ npx prisma format
 
 ### Konami Code Authentication
 
-- **Trigger**: Press ↑ ↑ ↓ ↓ ← → ← → B A anywhere on the site
-- **Navigation**: Automatically redirects to `/admin`
-- **Password**: Required after trigger (stored in `/client/wedding/.env` as `VITE_ADMIN_PASSWORD`)
-- **Current Password**: `pennyisperfect`
-- **Session**: Auth stored in sessionStorage (clears when browser closes)
-- **Hook Location**: `/client/wedding/src/hooks/useKonamiCode.ts`
-- **Implementation**: Global listener in `App.tsx` via `AppContent` component
+- **Trigger**: Press ↑ ↑ ↓ ↓ ← → ← → B A anywhere on the site.
+- **Navigation**: Redirects to `/admin`.
+- **Password**: Entered in a prompt; compared against `VITE_ADMIN_PASSWORD`
+  (`/client/.env`).
+- **Session**: Stored in `sessionStorage` (clears when the browser closes).
+- **Hook**: `/client/src/hooks/useKonamiCode.ts`
+- **Implementation**: Global listener in `App.tsx` via the `AppContent` component;
+  password gate in `/client/src/components/PasswordPrompt.tsx`.
 
-### Admin Features (Planned)
+### Admin Features (implemented)
 
-- View all RSVP responses
-- Guest list management (CRUD)
-- Photo management (upload/delete)
+The admin panel (`/client/src/pages/Admin.tsx`) is tabbed:
+
+- **RSVPs** — `components/admin/RsvpList.tsx`: stats, per-guest responses,
+  hotel answer, inline edit/delete.
+- **Guest List** — `components/admin/GuestListManager.tsx`: invitation/guest CRUD.
+- **CSV Import** — `components/admin/CsvImporter.tsx`: bulk guest import.
 
 ---
 
 ## Project Structure
 
-### Frontend
+### Frontend (`/client`)
 
 ```
-client/wedding/
-├── public/
-│   └── homepage.jpeg        # Landing page background
+client/
+├── public/                  # Static assets (images, hotel photo, etc.)
 ├── src/
-│   ├── assets/
-│   │   └── Brightwall.ttf   # Custom font for headings
 │   ├── components/
 │   │   ├── Navbar.tsx
 │   │   ├── Layout.tsx
 │   │   ├── CountdownTimer.tsx
-│   │   └── PasswordPrompt.tsx
+│   │   ├── DietaryPicker.tsx
+│   │   ├── PasswordPrompt.tsx
+│   │   └── admin/
+│   │       ├── RsvpList.tsx
+│   │       ├── GuestListManager.tsx
+│   │       └── CsvImporter.tsx
 │   ├── hooks/
 │   │   └── useKonamiCode.ts
 │   ├── pages/
 │   │   ├── Home.tsx
-│   │   ├── Story.tsx
-│   │   ├── Details.tsx
+│   │   ├── Story.tsx        # hidden route
+│   │   ├── Details.tsx      # hidden route
+│   │   ├── Travel.tsx       # hotel block + venue map
+│   │   ├── Venue.tsx
 │   │   ├── Registry.tsx
+│   │   ├── FAQ.tsx
 │   │   ├── RSVP.tsx
+│   │   ├── RsvpEdit.tsx     # /rsvp/edit?token=…
 │   │   ├── Photos.tsx
 │   │   └── Admin.tsx
-│   ├── theme.ts             # MUI theme + color palette
+│   ├── services/
+│   │   ├── api.service.ts
+│   │   └── rsvp.service.ts  # RSVP API client + shared types/constants
+│   ├── theme.ts             # MUI theme + `colors` palette
 │   ├── index.css            # Global styles + font-face
+│   ├── main.tsx             # App entry
 │   └── App.tsx              # Router + Konami Code
-└── .env                     # VITE_ADMIN_PASSWORD
+└── .env                     # VITE_ADMIN_PASSWORD, VITE_API_URL
 ```
 
-### Backend
+**Routes** (`App.tsx`): `/`, `/travel`, `/venue`, `/registry`, `/faq` (in nav);
+`/story`, `/details`, `/rsvp`, `/rsvp/edit`, `/photos`, `/admin` (accessible but
+not in nav).
+
+### Backend (`/server`)
 
 ```
 server/
 ├── prisma/
-│   ├── schema.prisma        # Database schema
-│   └── migrations/          # Migration history
+│   ├── schema.prisma
+│   └── migrations/
+├── generated/prisma/        # Generated Prisma Client (gitignored)
+├── scripts/
+│   └── importGuests.ts
 ├── src/
-│   ├── config/
-│   │   └── database.ts      # Prisma client instance
-│   ├── controllers/         # Request handlers
-│   ├── routes/              # Express routes
-│   ├── services/            # Business logic
+│   ├── config/database.ts   # Prisma client instance
+│   ├── controllers/         # rsvp, invitation, guest, import (+ example)
+│   ├── routes/              # index + per-resource routers
+│   ├── services/            # rsvp, invitation, guest, import, email (+ example)
 │   ├── middleware/
-│   │   ├── auth.ts          # JWT middleware
-│   │   └── errorHandler.ts  # Error handling
-│   ├── types/               # TypeScript types
-│   └── index.ts             # Express app
-├── .env                     # Environment variables
+│   │   ├── auth.ts          # JWT middleware (RSVP edit tokens)
+│   │   ├── errorHandler.ts  # AppError + error handling
+│   │   └── rateLimit.ts     # search/verify/submit/edit limiters
+│   ├── types/index.ts
+│   └── index.ts             # Express app (cors, json, /api router)
+├── .env
 └── dev.db                   # SQLite database (gitignored)
 ```
 
@@ -272,78 +371,78 @@ server/
 
 ### Backend (`/server/.env`)
 
-### Frontend (`/client/wedding/.env`)
+Referenced in code:
+
+- `PORT` (default 3001)
+- `NODE_ENV`
+- `DATABASE_URL` — e.g. `file:./dev.db`
+- `JWT_SECRET` — signs/verifies RSVP edit tokens (**required**)
+- `JWT_EXPIRATION_HRS`
+- `RSVP_DEADLINE` — `YYYY-MM-DD`; submits/edits blocked after this (**required**)
+- `APP_URL` — base URL used to build edit links in emails (default `http://localhost:5173`)
+- `RESEND_API_KEY` — if unset/placeholder, emails are logged instead of sent
+- `RESEND_FROM_EMAIL` — sender address (default `onboarding@resend.dev`)
+- `RSVP_NOTIFICATION_EMAIL` — admin notification recipient
+- `RSVP_NOTIFICATION_CC` — comma-separated CC list
+
+### Frontend (`/client/.env`)
+
+- `VITE_ADMIN_PASSWORD` — admin panel password
+- `VITE_API_URL` — API base (defaults to `/api`)
+
+See `.env.example`, `server/.env.example`, and `client/.env.example` for templates.
 
 ---
 
 ## Color Palette (Earthy Elegant)
 
-Defined in `/client/wedding/src/theme.ts`:
+Defined as `colors` in `/client/src/theme.ts`. Headings and body text use a unified
+warm rust (`#883d17`); buttons use olive (`#5d6239`). Backgrounds use cream
+(`#f6f4f0`) and warm ivory (`#ede3d4`). The MUI theme maps `primary → olive` and
+`secondary → terracotta`.
+
+---
 
 ## Common Workflows
 
 ### Adding a New Database Field
 
-1. **Update Schema**: Edit `/server/prisma/schema.prisma`
-
-   ```prisma
-   model Invitation {
-     // ... existing fields
-     newField  String?  // Add your field
-   }
-   ```
-
-2. **Create Migration**:
-
-   ```bash
-   cd /server
-   npx prisma migrate dev --name add_new_field
-   ```
-
-3. **Generate Client**:
-
-   ```bash
-   npx prisma generate
-   ```
-
-4. **Update TypeScript Types**: If needed, update `/server/src/types/index.ts`
-
-5. **Restart Dev Server**: The backend will pick up new types
-
-### Changing Database Schema
-
-- **Development**: Use `npx prisma migrate dev` - Creates migration + updates DB
-- **Production**: Use `npx prisma migrate deploy` - Only applies migrations
-- **Quick Prototyping**: Use `npx prisma db push` - Skips migration files (dev only)
+1. **Edit** `/server/prisma/schema.prisma`.
+2. **Migrate**: `cd server && npx prisma migrate dev --name <add_field>`.
+3. **Generate** (if needed): `npx prisma generate`.
+4. **Thread it through** the relevant layers, e.g. for an RSVP field:
+   `rsvp.service.ts` (input types + persistence) → `rsvp.controller.ts`
+   (validation) → `client/src/services/rsvp.service.ts` (payload/types) →
+   `RSVP.tsx` / `RsvpEdit.tsx` (UI) → `RsvpList.tsx` / `email.service.ts` (surface it).
+5. **Restart dev servers.**
 
 ### Viewing/Editing Data
 
 ```bash
-# Open Prisma Studio (GUI in browser)
-npx prisma studio
+cd server && npx prisma studio   # http://localhost:5555
 ```
-
-Navigate to `http://localhost:5555` to view and edit data visually.
 
 ---
 
 ## Development Servers
 
-### Start Frontend
+### Frontend
 
 ```bash
-cd client/wedding
-npm run dev
-# Runs on http://localhost:5173
+cd client
+npm run dev          # http://localhost:5173
 ```
 
-### Start Backend
+### Backend
 
 ```bash
 cd server
-npm run dev
-# Runs on http://localhost:3001
+npm run dev          # http://localhost:3001 (tsx watch)
 ```
+
+Useful server scripts: `npm run build` (tsc), `npm start` (node dist),
+`npm run lint`, `npm run type-check`. Client: `npm run build`, `npm run lint`,
+`npm run preview`.
 
 ---
 
@@ -351,35 +450,31 @@ npm run dev
 
 ### Gitignored Files
 
-- `/client/wedding/.env` - Admin password
-- `/server/.env` - Database URL & secrets
-- `/server/dev.db` - SQLite database
-- `/server/src/generated/prisma` - Generated Prisma Client
-- `/server/prisma/migrations` - Migration files (should be committed in production)
-
-**Note**: The migrations folder is currently gitignored but should be committed for production deployments.
+- `/client/.env` and `/server/.env`
+- `/server/dev.db` (+ journal)
+- `/server/generated/prisma` (generated client)
+- `/server/prisma/migrations` (should be committed for production deployments)
 
 ---
 
 ## Important Reminders
 
-1. **Prisma Generate**: Always run after schema changes to update TypeScript types
-2. **Database Migrations**: Use `migrate dev` in development, `migrate deploy` in production
-3. **Konami Code**: ↑↑↓↓←→←→BA to access admin (password: `pennyisperfect`)
-4. **One-time RSVPs**: Frontend should prevent re-submission, backend should validate
-5. **Plus-One Flow**: Create new Guest record when +1 is brought, then create RsvpResponse
-6. **Cascade Deletes**: Deleting Invitation removes all Guests and RsvpResponses
-7. **Name Search**: Use `OR` query on firstName and lastName with case-insensitive LIKE
-8. **Session Auth**: Admin auth stored in sessionStorage (clears on browser close)
+1. **Prisma Generate**: Run after schema changes so `tsc` sees new fields.
+2. **Migrations**: `migrate dev` locally, `migrate deploy` in production.
+3. **Konami Code**: ↑↑↓↓←→←→BA opens `/admin`; password from `VITE_ADMIN_PASSWORD`.
+4. **RSVP identity check is ZIP-based** — no invite codes; `Invitation.zip` must be set.
+5. **RSVPs are editable** via emailed magic link (upsert) until `RSVP_DEADLINE`.
+6. **Plus-ones** are real Guest rows (`isPlusOne`, `plusOneForGuestId`); created on
+   submit, removed if dropped on edit.
+7. **`stayingAtHotel`** is per-invitation, captured on the RSVP/edit forms.
+8. **Emails** go through Resend; without a real `RESEND_API_KEY` they are logged.
+9. **Admin endpoints are not server-authenticated** — gate the deployment accordingly.
 
 ---
 
 ## Future Considerations
 
-- [ ] Add RSVP deadline enforcement
-- [ ] Email confirmation after RSVP submission
-- [ ] Admin ability to export guest list as CSV
-- [ ] Meal preferences/dietary restrictions fields
+- [ ] Server-side auth for admin/management endpoints
+- [ ] Meal/menu choice surfaced in the RSVP UI (`Guest.menuChoice` exists)
 - [ ] Song requests feature
-- [ ] Backend validation to prevent duplicate RSVPs
-- [ ] Consider moving migrations to version control for production
+- [ ] CSV export of the guest list

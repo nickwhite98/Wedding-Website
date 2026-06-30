@@ -22,11 +22,15 @@ export interface SubmitRsvpInput {
   email: string;
   responses: GuestResponseInput[];
   plusOnes: PlusOneInput[];
+  stayingAtHotel?: boolean | null;
+  usingShuttle?: boolean | null;
 }
 
 export interface EditRsvpInput {
   responses: GuestResponseInput[];
   plusOnes: PlusOneInput[];
+  stayingAtHotel?: boolean | null;
+  usingShuttle?: boolean | null;
 }
 
 const EDIT_TOKEN_PURPOSE = 'rsvp_edit';
@@ -143,7 +147,11 @@ export class RsvpService {
     const result = await prisma.$transaction(async (tx) => {
       await tx.invitation.update({
         where: { id: invitation.id },
-        data: { rsvpEmail: input.email.trim().toLowerCase() },
+        data: {
+          rsvpEmail: input.email.trim().toLowerCase(),
+          stayingAtHotel: input.stayingAtHotel ?? null,
+          usingShuttle: input.usingShuttle ?? null,
+        },
       });
 
       for (const r of input.responses) {
@@ -280,6 +288,20 @@ export class RsvpService {
     }
 
     return prisma.$transaction(async (tx) => {
+      const invitationData: { stayingAtHotel?: boolean | null; usingShuttle?: boolean | null } = {};
+      if (input.stayingAtHotel !== undefined) {
+        invitationData.stayingAtHotel = input.stayingAtHotel;
+      }
+      if (input.usingShuttle !== undefined) {
+        invitationData.usingShuttle = input.usingShuttle;
+      }
+      if (Object.keys(invitationData).length > 0) {
+        await tx.invitation.update({
+          where: { id: invitation.id },
+          data: invitationData,
+        });
+      }
+
       for (const r of input.responses) {
         await tx.guest.update({
           where: { id: r.guestId },

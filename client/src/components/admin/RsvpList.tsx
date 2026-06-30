@@ -50,6 +50,8 @@ interface RsvpResponse {
 
 interface Invitation {
   id: number;
+  stayingAtHotel?: boolean | null;
+  usingShuttle?: boolean | null;
   guests: (Guest & { rsvpResponse?: RsvpResponse })[];
   rsvpResponses: RsvpResponse[];
 }
@@ -239,6 +241,8 @@ export const RsvpList = () => {
                 <TableCell sx={{ fontWeight: "bold" }}>Guest Name</TableCell>
                 <TableCell sx={{ fontWeight: "bold" }}>Type</TableCell>
                 <TableCell sx={{ fontWeight: "bold" }}>Invitation</TableCell>
+                <TableCell sx={{ fontWeight: "bold" }}>Hotel</TableCell>
+                <TableCell sx={{ fontWeight: "bold" }}>Shuttle</TableCell>
                 <TableCell sx={{ fontWeight: "bold" }}>Status</TableCell>
                 <TableCell sx={{ fontWeight: "bold" }}>Dietary</TableCell>
                 <TableCell sx={{ fontWeight: "bold" }}>Responded</TableCell>
@@ -269,6 +273,22 @@ export const RsvpList = () => {
                         )}
                       </TableCell>
                       <TableCell>No. {invitation.id}</TableCell>
+                      <TableCell>
+                        {invitation.stayingAtHotel == null
+                          ? "—"
+                          : invitation.stayingAtHotel
+                            ? "Yes"
+                            : "No"}
+                      </TableCell>
+                      <TableCell>
+                        {!invitation.stayingAtHotel
+                          ? "—"
+                          : invitation.usingShuttle == null
+                            ? "—"
+                            : invitation.usingShuttle
+                              ? "Yes"
+                              : "No"}
+                      </TableCell>
                       <TableCell>
                         <Chip
                           label={

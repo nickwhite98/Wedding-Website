@@ -21,6 +21,14 @@ function validateEmail(email: unknown): string {
   return trimmed.toLowerCase();
 }
 
+function validateNullableBoolean(raw: unknown, field: string): boolean | null {
+  if (raw === undefined || raw === null) return null;
+  if (typeof raw !== 'boolean') {
+    throw new AppError(`${field} must be a boolean`, 400);
+  }
+  return raw;
+}
+
 function validateResponses(raw: unknown): GuestResponseInput[] {
   if (!Array.isArray(raw) || raw.length === 0) {
     throw new AppError('At least one guest response is required', 400);
@@ -125,6 +133,10 @@ export class RsvpController {
       const email = validateEmail(body.email);
       const responses = validateResponses(body.responses);
       const plusOnes = validatePlusOnes(body.plusOnes);
+      const stayingAtHotel = validateNullableBoolean(body.stayingAtHotel, 'stayingAtHotel');
+      const usingShuttle = stayingAtHotel
+        ? validateNullableBoolean(body.usingShuttle, 'usingShuttle')
+        : null;
 
       const invitation = await rsvpService.submitRsvp({
         invitationId,
@@ -132,6 +144,8 @@ export class RsvpController {
         email,
         responses,
         plusOnes,
+        stayingAtHotel,
+        usingShuttle,
       });
 
       const token = rsvpService.generateEditToken(invitation.id, email);
@@ -161,6 +175,8 @@ export class RsvpController {
           attendingNames,
           notAttendingNames,
           plusOneName: plusOneNames.length ? plusOneNames.join(', ') : undefined,
+          stayingAtHotel: invitation.stayingAtHotel,
+          usingShuttle: invitation.usingShuttle,
           isEdit: false,
         }),
       ]);
@@ -259,8 +275,24 @@ export class RsvpController {
 
       const responses = validateResponses(body.responses);
       const plusOnes = validatePlusOnes(body.plusOnes);
+      const stayingAtHotel =
+        body.stayingAtHotel === undefined
+          ? undefined
+          : validateNullableBoolean(body.stayingAtHotel, 'stayingAtHotel');
+      // If they're not staying at the hotel, the shuttle question doesn't apply.
+      const usingShuttle =
+        stayingAtHotel === false
+          ? null
+          : body.usingShuttle === undefined
+            ? undefined
+            : validateNullableBoolean(body.usingShuttle, 'usingShuttle');
 
-      const invitation = await rsvpService.updateRsvp(token, { responses, plusOnes });
+      const invitation = await rsvpService.updateRsvp(token, {
+        responses,
+        plusOnes,
+        stayingAtHotel,
+        usingShuttle,
+      });
 
       const attendingNames = invitation!.guests
         .filter((g) => g.rsvpResponse?.isAttending)
@@ -279,6 +311,8 @@ export class RsvpController {
           attendingNames,
           notAttendingNames,
           plusOneName: plusOneNames.length ? plusOneNames.join(', ') : undefined,
+          stayingAtHotel: invitation!.stayingAtHotel,
+          usingShuttle: invitation!.usingShuttle,
           isEdit: true,
         })
         .catch((err) => console.error('[rsvp] admin notification failed', err));

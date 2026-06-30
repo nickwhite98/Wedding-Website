@@ -154,6 +154,27 @@ export const GuestListManager = () => {
   });
   const [creatingInvitation, setCreatingInvitation] = useState(false);
 
+  // Edit invitation dialog
+  const [editInvitationDialogOpen, setEditInvitationDialogOpen] =
+    useState(false);
+  const [editingInvitation, setEditingInvitation] = useState<Invitation | null>(
+    null,
+  );
+  const [editInvitationForm, setEditInvitationForm] = useState({
+    address: "",
+    address2: "",
+    city: "",
+    state: "",
+    zip: "",
+    country: "",
+    phoneNumber: "",
+    saveTheDateSent: false,
+    inviteSent: false,
+    tableNumber: "",
+    notes: "",
+  });
+  const [savingInvitation, setSavingInvitation] = useState(false);
+
   // Add existing guests to invitation dialog
   const [addExistingDialogOpen, setAddExistingDialogOpen] = useState(false);
   const [addExistingTargetId, setAddExistingTargetId] = useState<number | null>(
@@ -486,6 +507,72 @@ export const GuestListManager = () => {
     }
   };
 
+  const handleOpenEditInvitationDialog = (invitation: Invitation) => {
+    setEditingInvitation(invitation);
+    setEditInvitationForm({
+      address: invitation.address || "",
+      address2: invitation.address2 || "",
+      city: invitation.city || "",
+      state: invitation.state || "",
+      zip: invitation.zip || "",
+      country: invitation.country || "",
+      phoneNumber: invitation.phoneNumber || "",
+      saveTheDateSent: invitation.saveTheDateSent,
+      inviteSent: invitation.inviteSent,
+      tableNumber:
+        invitation.tableNumber != null ? String(invitation.tableNumber) : "",
+      notes: invitation.notes || "",
+    });
+    setEditInvitationDialogOpen(true);
+  };
+
+  const handleCloseEditInvitationDialog = () => {
+    setEditInvitationDialogOpen(false);
+    setEditingInvitation(null);
+  };
+
+  const handleSaveInvitation = async () => {
+    if (!editingInvitation) return;
+    try {
+      setSavingInvitation(true);
+      const payload: Record<string, unknown> = {
+        address: editInvitationForm.address || null,
+        address2: editInvitationForm.address2 || null,
+        city: editInvitationForm.city || null,
+        state: editInvitationForm.state || null,
+        zip: editInvitationForm.zip || null,
+        country: editInvitationForm.country || null,
+        phoneNumber: editInvitationForm.phoneNumber || null,
+        saveTheDateSent: editInvitationForm.saveTheDateSent,
+        inviteSent: editInvitationForm.inviteSent,
+        tableNumber: editInvitationForm.tableNumber
+          ? parseInt(editInvitationForm.tableNumber)
+          : null,
+        notes: editInvitationForm.notes || null,
+      };
+
+      const response = await fetch(
+        `${API_BASE_URL}/invitations/${editingInvitation.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
+
+      if (!response.ok) throw new Error("Failed to update invitation");
+
+      await fetchData();
+      handleCloseEditInvitationDialog();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to update invitation",
+      );
+    } finally {
+      setSavingInvitation(false);
+    }
+  };
+
   const handleCreateInvitation = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/import/assign-invitation`, {
@@ -733,6 +820,7 @@ export const GuestListManager = () => {
           onMoveGuest={handleOpenMoveDialog}
           onUnassignGuest={handleUnassignGuest}
           onAddExistingGuests={handleOpenAddExistingDialog}
+          onEditInvitation={handleOpenEditInvitationDialog}
           onRefresh={fetchData}
         />
       </TabPanel>
@@ -1244,6 +1332,171 @@ export const GuestListManager = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Edit Invitation Dialog */}
+      <Dialog
+        open={editInvitationDialogOpen}
+        onClose={handleCloseEditInvitationDialog}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          {editingInvitation
+            ? `Edit Invitation No. ${editingInvitation.id}`
+            : "Edit Invitation"}
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            label="Address"
+            value={editInvitationForm.address}
+            onChange={(e) =>
+              setEditInvitationForm({
+                ...editInvitationForm,
+                address: e.target.value,
+              })
+            }
+            sx={{ mb: 2, mt: 1 }}
+          />
+          <TextField
+            fullWidth
+            label="Address 2 (optional)"
+            value={editInvitationForm.address2}
+            onChange={(e) =>
+              setEditInvitationForm({
+                ...editInvitationForm,
+                address2: e.target.value,
+              })
+            }
+            sx={{ mb: 2 }}
+          />
+          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+            <TextField
+              label="City"
+              value={editInvitationForm.city}
+              onChange={(e) =>
+                setEditInvitationForm({
+                  ...editInvitationForm,
+                  city: e.target.value,
+                })
+              }
+              sx={{ flex: 2 }}
+            />
+            <TextField
+              label="State"
+              value={editInvitationForm.state}
+              onChange={(e) =>
+                setEditInvitationForm({
+                  ...editInvitationForm,
+                  state: e.target.value,
+                })
+              }
+              sx={{ flex: 1 }}
+            />
+            <TextField
+              label="ZIP"
+              value={editInvitationForm.zip}
+              onChange={(e) =>
+                setEditInvitationForm({
+                  ...editInvitationForm,
+                  zip: e.target.value,
+                })
+              }
+              sx={{ flex: 1 }}
+            />
+          </Box>
+          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+            <TextField
+              label="Country (optional)"
+              value={editInvitationForm.country}
+              onChange={(e) =>
+                setEditInvitationForm({
+                  ...editInvitationForm,
+                  country: e.target.value,
+                })
+              }
+              sx={{ flex: 1 }}
+            />
+            <TextField
+              label="Phone Number (optional)"
+              value={editInvitationForm.phoneNumber}
+              onChange={(e) =>
+                setEditInvitationForm({
+                  ...editInvitationForm,
+                  phoneNumber: e.target.value,
+                })
+              }
+              sx={{ flex: 1 }}
+            />
+          </Box>
+          <TextField
+            fullWidth
+            label="Table Number (optional)"
+            type="number"
+            value={editInvitationForm.tableNumber}
+            onChange={(e) =>
+              setEditInvitationForm({
+                ...editInvitationForm,
+                tableNumber: e.target.value,
+              })
+            }
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            label="Notes (optional)"
+            multiline
+            rows={3}
+            value={editInvitationForm.notes}
+            onChange={(e) =>
+              setEditInvitationForm({
+                ...editInvitationForm,
+                notes: e.target.value,
+              })
+            }
+            sx={{ mb: 2 }}
+          />
+          <Stack direction="row" spacing={3} sx={{ mt: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Checkbox
+                checked={editInvitationForm.saveTheDateSent}
+                onChange={(e) =>
+                  setEditInvitationForm({
+                    ...editInvitationForm,
+                    saveTheDateSent: e.target.checked,
+                  })
+                }
+              />
+              <Typography sx={{ color: colors.body }}>
+                Save the Date sent
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Checkbox
+                checked={editInvitationForm.inviteSent}
+                onChange={(e) =>
+                  setEditInvitationForm({
+                    ...editInvitationForm,
+                    inviteSent: e.target.checked,
+                  })
+                }
+              />
+              <Typography sx={{ color: colors.body }}>Invite sent</Typography>
+            </Box>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEditInvitationDialog}>Cancel</Button>
+          <Button
+            onClick={handleSaveInvitation}
+            variant="contained"
+            disabled={savingInvitation}
+            sx={{ backgroundColor: colors.olive }}
+          >
+            {savingInvitation ? "Saving..." : "Save Changes"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Add Existing Guests to Invitation Dialog */}
       <Dialog
         open={addExistingDialogOpen}
@@ -1462,6 +1715,7 @@ interface InvitationCardGridProps {
   onMoveGuest: (guest: Guest) => void;
   onUnassignGuest: (guest: Guest) => void;
   onAddExistingGuests: (invitationId: number) => void;
+  onEditInvitation: (invitation: Invitation) => void;
   onRefresh: () => void;
 }
 
@@ -1474,6 +1728,7 @@ const InvitationCardGrid = ({
   onMoveGuest,
   onUnassignGuest,
   onAddExistingGuests,
+  onEditInvitation,
   onRefresh,
 }: InvitationCardGridProps) => {
   const [selectedInvitationIds, setSelectedInvitationIds] = useState<number[]>(
@@ -1790,6 +2045,14 @@ const InvitationCardGrid = ({
                       )}
                     </TableCell>
                     <TableCell>
+                      <IconButton
+                        size="small"
+                        onClick={() => onEditInvitation(invitation)}
+                        sx={{ color: colors.olive }}
+                        title="Edit invitation (address, etc.)"
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
                       <IconButton
                         size="small"
                         onClick={() => onAddExistingGuests(invitation.id)}

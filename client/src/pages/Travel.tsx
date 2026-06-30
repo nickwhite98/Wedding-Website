@@ -1,36 +1,13 @@
 import { Box, Typography, Button, Paper } from "@mui/material";
-import { MapContainer, TileLayer, Marker } from "react-leaflet";
-import { DivIcon } from "leaflet";
 import { colors } from "../theme";
-import "leaflet/dist/leaflet.css";
-
-// Modern Google-style marker using inline SVG - taller/more oblong shape
-const modernMarkerSvg = `
-  <svg width="28" height="42" viewBox="0 0 28 42" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
-    </filter>
-    <path filter="url(#shadow)" d="M14 0C6.268 0 0 6.268 0 14c0 10 14 28 14 28s14-18 14-28C28 6.268 21.732 0 14 0z" fill="#EA4335"/>
-    <circle cx="14" cy="14" r="5" fill="#B31412"/>
-  </svg>
-`;
-
-const venueIcon = new DivIcon({
-  html: modernMarkerSvg,
-  className: "custom-marker",
-  iconSize: [28, 42],
-  iconAnchor: [14, 42],
-});
 
 export const Travel = () => {
-  const venueCoordinates: [number, number] = [
-    44.89995101470253, -84.63170317445132,
-  ];
-  const mapCoordinates: [number, number] = [
-    44.891948636404884, -84.62552478705584,
+  const gateCoordinates: [number, number] = [
+    44.90029176804298, -84.6150316177434,
   ];
 
-  const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${mapCoordinates[0]},${mapCoordinates[1]}`;
+  const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${gateCoordinates[0]},${gateCoordinates[1]}`;
+  const appleMapsUrl = `https://maps.apple.com/?daddr=${gateCoordinates[0]},${gateCoordinates[1]}`;
 
   const hotelInfo = {
     name: "Comfort Inn & Suites, Gaylord",
@@ -48,100 +25,246 @@ export const Travel = () => {
         mx: "auto",
       }}
     >
-      {/* Wedding Location Section */}
+      {/* Venue Directions Section */}
       <Paper
         elevation={0}
         sx={{
           mb: { xs: 4, md: 5 },
+          p: { xs: 3, md: 4 },
           backgroundColor: colors.warmIvory,
           borderRadius: 2,
-          overflow: "hidden",
         }}
       >
+        <Typography
+          variant="h4"
+          component="h2"
+          sx={{
+            color: colors.heading,
+            mb: 2.5,
+            textAlign: "center",
+          }}
+        >
+          Venue Directions
+        </Typography>
+
+        <Typography variant="body1" sx={{ color: colors.body, mb: 2 }}>
+          Our celebration is at the White family's property in northern Michigan
+          near Gaylord. The entrance to the venue is off of Viking Club Rd — the
+          exact location of the gate is shared at the link below.
+        </Typography>
+
         <Box
           sx={{
             display: "flex",
-            flexDirection: { xs: "column", md: "row" },
+            flexWrap: "wrap",
+            gap: 2,
+            mb: 3,
           }}
         >
-          {/* Text Content */}
-          <Box
+          <Button
+            variant="contained"
+            href={googleMapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             sx={{
-              p: { xs: 3, md: 4 },
-              flex: { md: 1 },
-              textAlign: "left",
-            }}
-          >
-            <Typography
-              variant="h4"
-              component="h2"
-              sx={{
-                color: colors.heading,
-                mb: 2.5,
-                textAlign: "center",
-              }}
-            >
-              Wedding Location
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                color: colors.body,
-                mb: 3,
-              }}
-            >
-              Join us for our celebration at the White family's property,
-              located in beautiful northern Michigan near Gaylord.
-            </Typography>
-            <Box sx={{ textAlign: "center" }}>
-              <Button
-                variant="contained"
-                href={googleMapsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                sx={{
-                  backgroundColor: colors.olive,
-                  color: colors.cream,
-                  fontWeight: 600,
-                  px: 3,
-                  py: 1,
-                  "&:hover": {
-                    backgroundColor: colors.bronze,
-                    color: colors.cream,
-                  },
-                }}
-              >
-                Get Directions
-              </Button>
-            </Box>
-          </Box>
-
-          {/* Leaflet Map */}
-          <Box
-            sx={{
-              width: { xs: "100%", md: "50%" },
-              height: { xs: "250px", md: "300px" },
-              flexShrink: 0,
-              "& .leaflet-container": {
-                height: "100%",
-                width: "100%",
+              backgroundColor: colors.olive,
+              color: colors.cream,
+              fontWeight: 600,
+              px: 3,
+              py: 1,
+              "&:hover": {
+                backgroundColor: colors.bronze,
+                color: colors.cream,
               },
             }}
           >
-            <MapContainer
-              center={venueCoordinates}
-              zoom={16}
-              scrollWheelZoom={true}
-              style={{ height: "100%", width: "100%" }}
-            >
-              <TileLayer
-                attribution="&copy; Google"
-                url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
-              />
-              <Marker position={venueCoordinates} icon={venueIcon} />
-            </MapContainer>
+            Directions (Google Maps)
+          </Button>
+          <Button
+            variant="contained"
+            href={appleMapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              backgroundColor: colors.olive,
+              color: colors.cream,
+              fontWeight: 600,
+              px: 3,
+              py: 1,
+              "&:hover": {
+                backgroundColor: colors.bronze,
+                color: colors.cream,
+              },
+            }}
+          >
+            Directions (Apple Maps)
+          </Button>
+        </Box>
+
+        <Typography
+          variant="h6"
+          sx={{
+            color: colors.heading,
+            fontFamily: "'Kabel', sans-serif",
+            fontWeight: 600,
+            mb: 1,
+          }}
+        >
+          From I-75
+        </Typography>
+        <Box component="ol" sx={{ color: colors.body, mb: 2, pl: 2.5 }}>
+          <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+            Take Exit 270 (Waters).
+          </Typography>
+          <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+            Head west on Marlette Rd for 3.3 miles, then turn left onto Viking
+            Club Rd.
+          </Typography>
+          <Typography component="li" variant="body1">
+            Follow Viking Club Rd for 2 miles to the gate.
+          </Typography>
+        </Box>
+        <Typography variant="body1" sx={{ color: colors.body, mb: 3 }}>
+          We recommend using one of the map links above for turn-by-turn
+          directions to the gate.
+        </Typography>
+
+        <Typography
+          variant="h6"
+          sx={{
+            color: colors.heading,
+            fontFamily: "'Kabel', sans-serif",
+            fontWeight: 600,
+            mb: 1,
+          }}
+        >
+          Once You Arrive
+        </Typography>
+        <Typography variant="body1" sx={{ color: colors.body }}>
+          From the gate, follow the signs to the parking area.{" "}
+          <Box component="span" sx={{ fontWeight: 700 }}>
+            Please note it's roughly a 5-minute drive from the gate to the
+            parking area on the property, plus about a 5-minute walk from parking
+            to the ceremony site, so plan your arrival accordingly.
+          </Box>
+        </Typography>
+      </Paper>
+
+      {/* Taxi Information Section */}
+      <Paper
+        elevation={0}
+        sx={{
+          mb: { xs: 3, md: 4 },
+          p: { xs: 3, md: 4 },
+          backgroundColor: colors.warmIvory,
+          borderRadius: 2,
+        }}
+      >
+        <Typography
+          variant="h4"
+          component="h2"
+          sx={{
+            color: colors.heading,
+            mb: 2.5,
+            textAlign: "center",
+          }}
+        >
+          Taxi Information
+        </Typography>
+
+        <Typography
+          variant="body1"
+          sx={{
+            color: colors.body,
+            mb: 2,
+            textAlign: "left",
+          }}
+        >
+          Complimentary taxi service is provided for guests staying at the hotel,
+          with a 15-person shuttle running to and from the venue.
+        </Typography>
+
+        <Box
+          sx={{
+            mb: 3,
+            textAlign: "left",
+          }}
+        >
+          {/* Drop-off to the wedding */}
+          <Typography
+            variant="h6"
+            sx={{
+              color: colors.heading,
+              fontFamily: "'Kabel', sans-serif",
+              fontWeight: 600,
+              mb: 1,
+            }}
+          >
+            Drop-off to the wedding
+          </Typography>
+          <Box component="ul" sx={{ color: colors.body, mb: 3, pl: 2 }}>
+            <Typography component="li" variant="body1" sx={{ mb: 1 }}>
+              First shuttle — Pickup: 3:00 PM · Drop-off: ~3:20 PM
+            </Typography>
+            <Typography component="li" variant="body1">
+              Second shuttle — Pickup: 3:40 PM · Drop-off: ~4:00 PM
+            </Typography>
+          </Box>
+          <Typography variant="body1" sx={{ color: colors.body, mb: 3 }}>
+            The shuttle drops guests off at the White family house, where you'll
+            be shuttled by golf cart the rest of the way to the ceremony
+            location.
+          </Typography>
+
+          {/* Return to the hotel */}
+          <Typography
+            variant="h6"
+            sx={{
+              color: colors.heading,
+              fontFamily: "'Kabel', sans-serif",
+              fontWeight: 600,
+              mb: 1,
+            }}
+          >
+            Return to the hotel
+          </Typography>
+          <Box component="ul" sx={{ color: colors.body, pl: 2 }}>
+            <Typography component="li" variant="body1">
+              Available between 10:00 PM and 12:00 AM
+            </Typography>
           </Box>
         </Box>
+
+        <Typography
+          variant="body1"
+          sx={{
+            color: colors.body,
+            mb: 2,
+            textAlign: "left",
+          }}
+        >
+          Guests not staying at the hotel can arrange a ride with North 2 Central
+          Taxi LLC at{" "}
+          <Box
+            component="a"
+            href="tel:+12313211300"
+            sx={{ color: colors.bronze, fontWeight: 600, whiteSpace: "nowrap" }}
+          >
+            231-321-1300
+          </Box>
+          .
+        </Typography>
+
+        <Typography
+          variant="body1"
+          sx={{
+            color: colors.body,
+            textAlign: "left",
+          }}
+        >
+          Parking is available at the venue for anyone who prefers to drive to and
+          from the celebration themselves.
+        </Typography>
       </Paper>
 
       {/* Accommodations Section */}

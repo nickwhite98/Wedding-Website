@@ -15,6 +15,8 @@ interface AdminNotificationParams {
   attendingNames: string[];
   notAttendingNames: string[];
   plusOneName?: string;
+  stayingAtHotel?: boolean | null;
+  usingShuttle?: boolean | null;
   isEdit: boolean;
 }
 
@@ -154,6 +156,10 @@ ${notAttendingHtml}
     const verb = params.isEdit ? 'updated their' : 'submitted an';
     const attendingCount = params.attendingNames.length;
     const notAttendingCount = params.notAttendingNames.length;
+    const hotelAnswer =
+      params.stayingAtHotel == null ? 'No answer' : params.stayingAtHotel ? 'Yes' : 'No';
+    const shuttleAnswer =
+      params.usingShuttle == null ? 'No answer' : params.usingShuttle ? 'Yes' : 'No';
 
     const text = [
       `Invitation #${params.invitationId} ${verb} RSVP.`,
@@ -166,6 +172,8 @@ ${notAttendingHtml}
         ? `Not attending:\n${textList(params.notAttendingNames)}`
         : '',
       params.plusOneName ? `Plus-one: ${params.plusOneName}` : '',
+      `Staying at the hotel: ${hotelAnswer}`,
+      params.stayingAtHotel ? `Using taxi shuttle: ${shuttleAnswer}` : '',
     ]
       .filter(Boolean)
       .join('\n');
@@ -182,6 +190,10 @@ ${notAttendingHtml}
         : '',
       params.plusOneName
         ? `<p><strong>Plus-one:</strong> ${escapeHtml(params.plusOneName)}</p>`
+        : '',
+      `<p><strong>Staying at the hotel:</strong> ${hotelAnswer}</p>`,
+      params.stayingAtHotel
+        ? `<p><strong>Using taxi shuttle:</strong> ${shuttleAnswer}</p>`
         : '',
     ];
 

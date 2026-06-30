@@ -25,6 +25,8 @@ model Invitation {
   tableNumber      Int?
   notes            String?
   rsvpEmail        String?
+  stayingAtHotel   Boolean?
+  usingShuttle     Boolean?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
