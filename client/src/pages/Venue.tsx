@@ -30,6 +30,11 @@ const backgroundImages = [
 const allVenueImages = [
   ...backgroundImages,
   { src: "/venue-images/IMG_8195.jpg", alt: "Venue photo" },
+  { src: "/Home-2.jpg", alt: "Kathryn & Nicholas" },
+  { src: "/Home-3.jpg", alt: "Kathryn & Nicholas" },
+  { src: "/Home-4.jpg", alt: "Kathryn & Nicholas" },
+  { src: "/Allison Lynn-7402_websize.jpg", alt: "Kathryn & Nicholas" },
+  { src: "/Allison Lynn-8168_websize.jpg", alt: "Kathryn & Nicholas" },
 ];
 
 const SLIDE_GAP = 40; // Gap between images
@@ -455,9 +460,13 @@ export const Venue = () => {
           {/* Left arrow - desktop only */}
           {!isMobile && (
             <IconButton
-              onClick={() => handlePrevImage(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePrevImage(true);
+              }}
               sx={{
                 position: "fixed",
+                zIndex: 10,
                 left: { md: 40 },
                 top: "50%",
                 transform: "translateY(-50%)",
@@ -475,9 +484,13 @@ export const Venue = () => {
           {/* Right arrow - desktop only */}
           {!isMobile && (
             <IconButton
-              onClick={() => handleNextImage(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNextImage(true);
+              }}
               sx={{
                 position: "fixed",
+                zIndex: 10,
                 right: { md: 40 },
                 top: "50%",
                 transform: "translateY(-50%)",

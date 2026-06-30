@@ -266,7 +266,39 @@ export const RSVP = () => {
   return (
     <ThemeProvider theme={rsvpTheme}>
       <CssBaseline />
-      <Box sx={{ py: 6, maxWidth: 720, mx: "auto", width: "100%" }}>
+      <Box
+        sx={{
+          position: "relative",
+          minHeight: "100svh",
+          width: "100%",
+          backgroundImage: 'url("/Allison Lynn-7402_websize.jpg")',
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundAttachment: "fixed",
+        }}
+      >
+        {/* Scrim for contrast over the photo */}
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.55))",
+          }}
+        />
+
+        {/* Content panel */}
+        <Box sx={{ position: "relative", zIndex: 1, py: { xs: 4, md: 6 }, px: 2 }}>
+          <Box
+            sx={{
+              maxWidth: 720,
+              mx: "auto",
+              width: "100%",
+              bgcolor: "rgba(255,255,255,0.95)",
+              borderRadius: 3,
+              p: { xs: 3, md: 4 },
+              boxShadow: "0 12px 40px rgba(0,0,0,0.25)",
+            }}
+          >
         {step === "search" && (
           <Stack spacing={2}>
             <Typography variant="body1" align="center">
@@ -576,6 +608,8 @@ export const RSVP = () => {
           </MuiLink>{" "}
           and we'll help you out.
         </Typography>
+          </Box>
+        </Box>
       </Box>
     </ThemeProvider>
   );
