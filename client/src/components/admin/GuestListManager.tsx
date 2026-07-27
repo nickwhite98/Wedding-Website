@@ -47,6 +47,12 @@ import { colors } from "../../theme";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
+interface RsvpResponse {
+  id: number;
+  isAttending: boolean;
+  respondedAt: string;
+}
+
 interface Guest {
   id: number;
   firstName: string;
@@ -55,8 +61,10 @@ interface Guest {
   menuChoice?: string;
   dietaryRestrictions?: string;
   plusOne?: boolean;
+  isPlusOne?: boolean;
   invitationId?: number;
   invitation?: Invitation;
+  rsvpResponse?: RsvpResponse | null;
 }
 
 interface Invitation {
@@ -73,6 +81,7 @@ interface Invitation {
   tableNumber?: number;
   notes?: string;
   guests: Guest[];
+  rsvpResponses?: RsvpResponse[];
 }
 
 interface TabPanelProps {
@@ -89,6 +98,17 @@ const TabPanel = (props: TabPanelProps) => {
     </div>
   );
 };
+
+const RsvpStatusChip = ({ guest }: { guest: Guest }) =>
+  guest.rsvpResponse ? (
+    <Chip
+      size="small"
+      label={guest.rsvpResponse.isAttending ? "Attending" : "Not Attending"}
+      color={guest.rsvpResponse.isAttending ? "success" : "error"}
+    />
+  ) : (
+    <Chip size="small" label="No Response" variant="outlined" />
+  );
 
 export const GuestListManager = () => {
   const [guests, setGuests] = useState<Guest[]>([]);
@@ -1617,6 +1637,7 @@ const GuestTable = ({
               Dietary Restrictions
             </TableCell>
             <TableCell sx={{ fontWeight: "bold" }}>Invitation</TableCell>
+            <TableCell sx={{ fontWeight: "bold" }}>RSVP</TableCell>
             <TableCell sx={{ fontWeight: "bold" }} align="center">
               +1
             </TableCell>
@@ -1649,6 +1670,9 @@ const GuestTable = ({
                 ) : (
                   <Chip label="Unassigned" size="small" />
                 )}
+              </TableCell>
+              <TableCell>
+                <RsvpStatusChip guest={guest} />
               </TableCell>
               <TableCell align="center">
                 {guest.plusOne ? (
@@ -1894,6 +1918,9 @@ const InvitationCardGrid = ({
               <TableCell sx={{ fontWeight: "bold" }}>Address</TableCell>
               <TableCell sx={{ fontWeight: "bold" }}>Guests</TableCell>
               <TableCell sx={{ fontWeight: "bold" }} align="center">
+                RSVP
+              </TableCell>
+              <TableCell sx={{ fontWeight: "bold" }} align="center">
                 +1
               </TableCell>
               <TableCell sx={{ fontWeight: "bold" }} align="center">
@@ -1922,6 +1949,13 @@ const InvitationCardGrid = ({
                 (g) => g.plusOne,
               ).length;
               const headcount = invitation.guests.length + plusOneCount;
+              const respondedGuests = invitation.guests.filter(
+                (g) => g.rsvpResponse,
+              );
+              const attendingCount = respondedGuests.filter(
+                (g) => g.rsvpResponse?.isAttending,
+              ).length;
+              const declinedCount = respondedGuests.length - attendingCount;
               return (
                 <>
                   <TableRow
@@ -1992,6 +2026,39 @@ const InvitationCardGrid = ({
                             plusOneCount === 1 ? "" : "s"
                           } (total ${headcount})`}
                       </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      {respondedGuests.length === 0 ? (
+                        <Chip
+                          size="small"
+                          label="No Response"
+                          variant="outlined"
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            gap: 0.5,
+                            justifyContent: "center",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          {attendingCount > 0 && (
+                            <Chip
+                              size="small"
+                              color="success"
+                              label={`${attendingCount} attending`}
+                            />
+                          )}
+                          {declinedCount > 0 && (
+                            <Chip
+                              size="small"
+                              color="error"
+                              label={`${declinedCount} declined`}
+                            />
+                          )}
+                        </Box>
+                      )}
                     </TableCell>
                     <TableCell align="center">
                       {plusOneCount > 0 ? (
@@ -2078,7 +2145,7 @@ const InvitationCardGrid = ({
                   </TableRow>
                   <TableRow>
                     <TableCell
-                      colSpan={10}
+                      colSpan={11}
                       sx={{ py: 0, backgroundColor: colors.warmIvory }}
                     >
                       <Collapse in={isExpanded} timeout="auto" unmountOnExit>
@@ -2141,6 +2208,9 @@ const InvitationCardGrid = ({
                                     +1
                                   </TableCell>
                                   <TableCell sx={{ fontWeight: 600 }}>
+                                    RSVP
+                                  </TableCell>
+                                  <TableCell sx={{ fontWeight: 600 }}>
                                     Email
                                   </TableCell>
                                   <TableCell sx={{ fontWeight: 600 }}>
@@ -2171,6 +2241,9 @@ const InvitationCardGrid = ({
                                       ) : (
                                         "—"
                                       )}
+                                    </TableCell>
+                                    <TableCell>
+                                      <RsvpStatusChip guest={guest} />
                                     </TableCell>
                                     <TableCell>{guest.email || "—"}</TableCell>
                                     <TableCell>

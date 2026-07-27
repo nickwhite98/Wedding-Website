@@ -144,8 +144,8 @@ export const Travel = () => {
           From the gate, follow the signs to the parking area.{" "}
           <Box component="span" sx={{ fontWeight: 700 }}>
             Please note it's roughly a 5-minute drive from the gate to the
-            parking area on the property, plus about a 5-minute walk from parking
-            to the ceremony site, so plan your arrival accordingly.
+            parking area on the property, plus about a 5-minute walk from
+            parking to the ceremony site, so plan your arrival accordingly.
           </Box>
         </Typography>
       </Paper>
@@ -180,8 +180,8 @@ export const Travel = () => {
             textAlign: "left",
           }}
         >
-          Complimentary taxi service is provided for guests staying at the hotel,
-          with a 15-person shuttle running to and from the venue.
+          Complimentary taxi service is provided for guests staying at the
+          hotel, with a 15-person shuttle running to and from the venue.
         </Typography>
 
         <Box
@@ -239,31 +239,11 @@ export const Travel = () => {
           variant="body1"
           sx={{
             color: colors.body,
-            mb: 2,
             textAlign: "left",
           }}
         >
-          Guests not staying at the hotel can arrange a ride with North 2 Central
-          Taxi LLC at{" "}
-          <Box
-            component="a"
-            href="tel:+12313211300"
-            sx={{ color: colors.bronze, fontWeight: 600, whiteSpace: "nowrap" }}
-          >
-            231-321-1300
-          </Box>
-          .
-        </Typography>
-
-        <Typography
-          variant="body1"
-          sx={{
-            color: colors.body,
-            textAlign: "left",
-          }}
-        >
-          Parking is available at the venue for anyone who prefers to drive to and
-          from the celebration themselves.
+          Parking is available at the venue for anyone who prefers to drive to
+          and from the celebration themselves.
         </Typography>
       </Paper>
 
