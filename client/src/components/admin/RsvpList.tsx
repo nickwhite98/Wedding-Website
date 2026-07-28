@@ -23,10 +23,13 @@ import {
   ToggleButtonGroup,
   TextField,
   Stack,
+  Snackbar,
 } from "@mui/material";
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
+  ContentCopy as ContentCopyIcon,
+  Download as DownloadIcon,
 } from "@mui/icons-material";
 import { colors } from "../../theme";
 
@@ -56,6 +59,7 @@ interface Invitation {
   inviteSent?: boolean;
   stayingAtHotel?: boolean | null;
   usingShuttle?: boolean | null;
+  rsvpEmail?: string | null;
   guests: (Guest & { rsvpResponse?: RsvpResponse })[];
   rsvpResponses: RsvpResponse[];
 }
@@ -117,6 +121,7 @@ export const RsvpList = () => {
   const [editing, setEditing] = useState<EditingRow | null>(null);
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState<StatFilter>("responded");
+  const [copyMessage, setCopyMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -242,6 +247,50 @@ export const RsvpList = () => {
   const pendingList = invitations.filter(
     (inv) => inv.rsvpResponses.length === 0,
   );
+  const respondedWithEmail = invitations.filter(
+    (inv) => inv.rsvpResponses.length > 0 && inv.rsvpEmail?.trim(),
+  );
+  const rsvpEmails = [
+    ...new Set(
+      respondedWithEmail.map((inv) => inv.rsvpEmail!.trim().toLowerCase()),
+    ),
+  ];
+
+  const handleCopyEmails = async () => {
+    try {
+      await navigator.clipboard.writeText(rsvpEmails.join(", "));
+      setCopyMessage(
+        `Copied ${rsvpEmails.length} email${
+          rsvpEmails.length === 1 ? "" : "s"
+        } to clipboard`,
+      );
+    } catch {
+      setCopyMessage("Couldn't copy — your browser blocked clipboard access");
+    }
+  };
+
+  const csvEscape = (value: string) => `"${value.replace(/"/g, '""')}"`;
+
+  const handleDownloadEmailsCsv = () => {
+    const rows = respondedWithEmail.map((inv) =>
+      [
+        `No. ${inv.id}`,
+        inv.guests.map((g) => `${g.firstName} ${g.lastName}`).join(", "),
+        inv.rsvpEmail!.trim(),
+      ]
+        .map(csvEscape)
+        .join(","),
+    );
+    const csv = ["Invitation,Guests,Email", ...rows].join("\n");
+    const url = URL.createObjectURL(
+      new Blob([csv], { type: "text/csv;charset=utf-8;" }),
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "rsvp-emails.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
   const hotelList = invitations.filter((inv) => inv.stayingAtHotel === true);
   const shuttleList = invitations.filter((inv) => inv.usingShuttle === true);
 
@@ -397,12 +446,42 @@ export const RsvpList = () => {
           </Card>
         ))}
       </Box>
-      <Typography
-        variant="caption"
-        sx={{ display: "block", mb: 3, color: colors.bodyLight }}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 1,
+          mb: 3,
+        }}
       >
-        Click a card to filter the list below.
-      </Typography>
+        <Typography variant="caption" sx={{ color: colors.bodyLight }}>
+          Click a card to filter the list below.
+        </Typography>
+        <Stack direction="row" spacing={1}>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<ContentCopyIcon />}
+            onClick={handleCopyEmails}
+            disabled={rsvpEmails.length === 0}
+            sx={{ borderColor: colors.olive, color: colors.olive }}
+          >
+            Copy RSVP Emails ({rsvpEmails.length})
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={handleDownloadEmailsCsv}
+            disabled={rsvpEmails.length === 0}
+            sx={{ borderColor: colors.olive, color: colors.olive }}
+          >
+            Export CSV
+          </Button>
+        </Stack>
+      </Box>
 
       <Typography variant="h5" sx={{ mb: 2, color: colors.heading }}>
         {filterTitles[filter]} (
@@ -737,6 +816,14 @@ export const RsvpList = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={!!copyMessage}
+        autoHideDuration={3000}
+        onClose={() => setCopyMessage(null)}
+        message={copyMessage}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      />
     </Box>
   );
 };
