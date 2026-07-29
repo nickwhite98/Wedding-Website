@@ -19,7 +19,7 @@ export interface PlusOneInput {
 export interface SubmitRsvpInput {
   invitationId: number;
   zip: string;
-  email: string;
+  email: string | null; // null allowed only when nobody in the party is attending
   responses: GuestResponseInput[];
   plusOnes: PlusOneInput[];
   stayingAtHotel?: boolean | null;
@@ -148,7 +148,7 @@ export class RsvpService {
       await tx.invitation.update({
         where: { id: invitation.id },
         data: {
-          rsvpEmail: input.email.trim().toLowerCase(),
+          rsvpEmail: input.email ? input.email.trim().toLowerCase() : null,
           stayingAtHotel: input.stayingAtHotel ?? null,
           usingShuttle: input.usingShuttle ?? null,
         },

@@ -21,6 +21,13 @@ function validateEmail(email: unknown): string {
   return trimmed.toLowerCase();
 }
 
+// Email is optional when nobody in the party is attending, but if one is
+// provided anyway it still has to be valid.
+function validateOptionalEmail(email: unknown): string | null {
+  if (typeof email !== 'string' || email.trim().length === 0) return null;
+  return validateEmail(email);
+}
+
 function validateNullableBoolean(raw: unknown, field: string): boolean | null {
   if (raw === undefined || raw === null) return null;
   if (typeof raw !== 'boolean') {
@@ -130,9 +137,12 @@ export class RsvpController {
         throw new AppError('invitationId and zip are required', 400);
       }
 
-      const email = validateEmail(body.email);
       const responses = validateResponses(body.responses);
       const plusOnes = validatePlusOnes(body.plusOnes);
+      const anyAttending =
+        responses.some((r) => r.isAttending) || plusOnes.some((p) => p.isAttending);
+      // Email is only required when someone is attending (it powers the edit link).
+      const email = anyAttending ? validateEmail(body.email) : validateOptionalEmail(body.email);
       const stayingAtHotel = validateNullableBoolean(body.stayingAtHotel, 'stayingAtHotel');
       const usingShuttle = stayingAtHotel
         ? validateNullableBoolean(body.usingShuttle, 'usingShuttle')
@@ -148,8 +158,6 @@ export class RsvpController {
         usingShuttle,
       });
 
-      const token = rsvpService.generateEditToken(invitation.id, email);
-
       const attendingNames = invitation.guests
         .filter((g) => g.rsvpResponse?.isAttending)
         .map((g) => `${g.firstName} ${g.lastName}`);
@@ -160,18 +168,10 @@ export class RsvpController {
         .filter((g) => g.isPlusOne)
         .map((g) => `${g.firstName} ${g.lastName}`);
 
-      await Promise.allSettled([
-        emailService.sendGuestConfirmation({
-          to: email,
-          invitationId: invitation.id,
-          editToken: token,
-          attendingNames,
-          notAttendingNames,
-          deadlineDisplay: formatDeadline(),
-        }),
+      const notifications: Promise<unknown>[] = [
         emailService.sendAdminNotification({
           invitationId: invitation.id,
-          submitterEmail: email,
+          submitterEmail: email ?? 'none provided',
           attendingNames,
           notAttendingNames,
           plusOneName: plusOneNames.length ? plusOneNames.join(', ') : undefined,
@@ -179,7 +179,21 @@ export class RsvpController {
           usingShuttle: invitation.usingShuttle,
           isEdit: false,
         }),
-      ]);
+      ];
+      if (email) {
+        const token = rsvpService.generateEditToken(invitation.id, email);
+        notifications.push(
+          emailService.sendGuestConfirmation({
+            to: email,
+            invitationId: invitation.id,
+            editToken: token,
+            attendingNames,
+            notAttendingNames,
+            deadlineDisplay: formatDeadline(),
+          }),
+        );
+      }
+      await Promise.allSettled(notifications);
 
       res.status(201).json({ success: true, data: { invitationId: invitation.id } });
     } catch (error) {

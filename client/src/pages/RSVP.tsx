@@ -167,6 +167,11 @@ export const RSVP = () => {
     });
   };
 
+  const anyAttending = useMemo(
+    () => guestForm.some((g) => g.isAttending === true),
+    [guestForm],
+  );
+
   const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const emailTrimmed = email.trim();
   const emailTyped = emailTrimmed.length > 0;
@@ -178,22 +183,17 @@ export const RSVP = () => {
       ? "Email is required."
       : "We'll send a confirmation with a link to edit your RSVP if needed. This is the email we'll use to verify any future edits.";
 
-  const anyAttending = useMemo(
-    () => guestForm.some((g) => g.isAttending === true),
-    [guestForm],
-  );
-
   const formValid = useMemo(() => {
     if (!invitation) return false;
     if (guestForm.some((g) => g.isAttending === null)) return false;
-    if (!emailRe.test(emailTrimmed)) return false;
+    if (anyAttending && !emailRe.test(emailTrimmed)) return false;
     for (const g of guestForm) {
       if (g.bringingPlusOne) {
         if (!g.plusOneFirstName.trim() || !g.plusOneLastName.trim()) return false;
       }
     }
     return true;
-  }, [invitation, guestForm, emailTrimmed]);
+  }, [invitation, guestForm, anyAttending, emailTrimmed]);
 
   const handleSubmit = async () => {
     if (!invitation) return;
@@ -223,7 +223,7 @@ export const RSVP = () => {
       await rsvpApi.submit({
         invitationId: invitation.id,
         zip: zip.trim(),
-        email: email.trim(),
+        email: anyAttending ? email.trim() : undefined,
         responses,
         plusOnes,
         stayingAtHotel: anyAttending ? stayingAtHotel : null,
@@ -473,15 +473,17 @@ export const RSVP = () => {
 
             <Divider />
 
-            <TextField
-              fullWidth
-              label="Your email (required)"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              error={emailError}
-              helperText={emailHelper}
-            />
+            {anyAttending && (
+              <TextField
+                fullWidth
+                label="Your email (required)"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                error={emailError}
+                helperText={emailHelper}
+              />
+            )}
 
             {anyAttending && (
               <Box>
@@ -588,9 +590,18 @@ export const RSVP = () => {
           <Stack spacing={2} alignItems="center" sx={{ mt: 4 }}>
             <Typography variant="h5">Thank you!</Typography>
             <Typography align="center">
-              Your RSVP has been received. We've sent a confirmation email to {email}. You can use the
-              link in that email to edit your response before the deadline if anything changes. Be sure
-              to save the email so you can find the edit link later.
+              {anyAttending ? (
+                <>
+                  Your RSVP has been received. We've sent a confirmation email to {email}. You can use
+                  the link in that email to edit your response before the deadline if anything changes.
+                  Be sure to save the email so you can find the edit link later.
+                </>
+              ) : (
+                <>
+                  Your RSVP has been received. We're sorry you can't make it! If anything changes,
+                  email us at {CONTACT_EMAIL} before the deadline and we'll update your response.
+                </>
+              )}
             </Typography>
             <Button onClick={resetAll}>Submit another RSVP</Button>
           </Stack>

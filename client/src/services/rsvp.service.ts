@@ -56,7 +56,8 @@ export interface PlusOnePayload {
 export interface SubmitPayload {
   invitationId: number;
   zip: string;
-  email: string;
+  /** Required when anyone in the party is attending; omitted for all-declining parties. */
+  email?: string;
   responses: GuestResponsePayload[];
   plusOnes: PlusOnePayload[];
   stayingAtHotel?: boolean | null;
