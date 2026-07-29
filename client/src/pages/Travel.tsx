@@ -181,7 +181,9 @@ export const Travel = () => {
           }}
         >
           Complimentary taxi service is provided for guests staying at the
-          hotel, with a 15-person shuttle running to and from the venue.
+          hotel, with a 15-person shuttle running to and from the venue. If
+          you're not staying at the hotel and would like to arrange taxi
+          services, please reach out to TAXI 45 at (989) 745 8150
         </Typography>
 
         <Box

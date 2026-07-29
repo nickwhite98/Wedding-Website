@@ -114,12 +114,55 @@ interface EditingRow {
   dietaryRestrictions: string;
 }
 
+interface EditingParty {
+  invitationId: number;
+  guestNames: string;
+  stayingAtHotel: boolean | null;
+  usingShuttle: boolean | null;
+  rsvpEmail: string;
+}
+
+const TriStateToggle = ({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: boolean | null;
+  onChange: (value: boolean | null) => void;
+  disabled?: boolean;
+}) => (
+  <ToggleButtonGroup
+    value={value === null ? "unanswered" : value ? "yes" : "no"}
+    exclusive
+    onChange={(_, val) =>
+      val !== null &&
+      onChange(val === "yes" ? true : val === "no" ? false : null)
+    }
+    fullWidth
+    disabled={disabled}
+    size="small"
+    sx={{
+      "& .MuiToggleButton-root.Mui-selected": {
+        backgroundColor: colors.olive,
+        color: "#fff",
+        "&:hover": { backgroundColor: colors.eucalyptus },
+      },
+    }}
+  >
+    <ToggleButton value="yes">Yes</ToggleButton>
+    <ToggleButton value="no">No</ToggleButton>
+    <ToggleButton value="unanswered">No answer</ToggleButton>
+  </ToggleButtonGroup>
+);
+
 export const RsvpList = () => {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<EditingRow | null>(null);
   const [saving, setSaving] = useState(false);
+  const [editingParty, setEditingParty] = useState<EditingParty | null>(null);
+  const [savingParty, setSavingParty] = useState(false);
   const [filter, setFilter] = useState<StatFilter>("responded");
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
 
@@ -181,6 +224,52 @@ export const RsvpList = () => {
       setError(err instanceof Error ? err.message : "Failed to update RSVP");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const openPartyEditor = (invitation: Invitation) => {
+    setEditingParty({
+      invitationId: invitation.id,
+      guestNames: invitation.guests
+        .map((g) => `${g.firstName} ${g.lastName}`)
+        .join(", "),
+      stayingAtHotel: invitation.stayingAtHotel ?? null,
+      usingShuttle: invitation.usingShuttle ?? null,
+      rsvpEmail: invitation.rsvpEmail || "",
+    });
+  };
+
+  const partyEmailValid =
+    !editingParty?.rsvpEmail.trim() ||
+    /^\S+@\S+\.\S+$/.test(editingParty.rsvpEmail.trim());
+
+  const handleSaveParty = async () => {
+    if (!editingParty || !partyEmailValid) return;
+    try {
+      setSavingParty(true);
+      // Shuttle only applies to parties staying at the hotel (matches the
+      // guest-facing RSVP flow, which only asks when hotel = yes).
+      const usingShuttle =
+        editingParty.stayingAtHotel === true ? editingParty.usingShuttle : null;
+      const response = await fetch(
+        `${API_BASE_URL}/invitations/${editingParty.invitationId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            stayingAtHotel: editingParty.stayingAtHotel,
+            usingShuttle,
+            rsvpEmail: editingParty.rsvpEmail.trim() || null,
+          }),
+        },
+      );
+      if (!response.ok) throw new Error("Failed to update party");
+      setEditingParty(null);
+      await fetchData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update party");
+    } finally {
+      setSavingParty(false);
     }
   };
 
@@ -580,6 +669,9 @@ export const RsvpList = () => {
                       Invite Sent
                     </TableCell>
                   )}
+                  {(filter === "hotel" || filter === "shuttle") && (
+                    <TableCell sx={{ fontWeight: "bold" }}>Actions</TableCell>
+                  )}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -619,6 +711,18 @@ export const RsvpList = () => {
                       {filter === "pending" && (
                         <TableCell>
                           {invitation.inviteSent ? "Yes" : "No"}
+                        </TableCell>
+                      )}
+                      {(filter === "hotel" || filter === "shuttle") && (
+                        <TableCell>
+                          <IconButton
+                            size="small"
+                            onClick={() => openPartyEditor(invitation)}
+                            sx={{ color: colors.olive }}
+                            title="Edit party (hotel, shuttle, email)"
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
                         </TableCell>
                       )}
                     </TableRow>
@@ -667,7 +771,25 @@ export const RsvpList = () => {
                           "Primary"
                         )}
                       </TableCell>
-                      <TableCell>No. {invitation.id}</TableCell>
+                      <TableCell>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
+                          No. {invitation.id}
+                          <IconButton
+                            size="small"
+                            onClick={() => openPartyEditor(invitation)}
+                            sx={{ color: colors.olive }}
+                            title="Edit party (hotel, shuttle, email)"
+                          >
+                            <EditIcon sx={{ fontSize: 16 }} />
+                          </IconButton>
+                        </Box>
+                      </TableCell>
                       <TableCell>
                         {invitation.stayingAtHotel == null
                           ? "—"
@@ -813,6 +935,102 @@ export const RsvpList = () => {
             sx={{ backgroundColor: colors.olive }}
           >
             {saving ? "Saving…" : "Save"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={!!editingParty}
+        onClose={() => !savingParty && setEditingParty(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Edit Party — Invitation No. {editingParty?.invitationId}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={3} sx={{ mt: 1 }}>
+            <Typography variant="body2" sx={{ color: colors.bodyLight }}>
+              {editingParty?.guestNames}
+            </Typography>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ mb: 1, color: colors.body, fontWeight: 600 }}
+              >
+                Staying at the hotel?
+              </Typography>
+              <TriStateToggle
+                value={editingParty?.stayingAtHotel ?? null}
+                onChange={(val) =>
+                  editingParty &&
+                  setEditingParty({
+                    ...editingParty,
+                    stayingAtHotel: val,
+                    usingShuttle:
+                      val === true ? editingParty.usingShuttle : null,
+                  })
+                }
+              />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ mb: 1, color: colors.body, fontWeight: 600 }}
+              >
+                Using the shuttle?
+              </Typography>
+              <TriStateToggle
+                value={editingParty?.usingShuttle ?? null}
+                onChange={(val) =>
+                  editingParty &&
+                  setEditingParty({ ...editingParty, usingShuttle: val })
+                }
+                disabled={editingParty?.stayingAtHotel !== true}
+              />
+              {editingParty?.stayingAtHotel !== true && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: colors.bodyLight, mt: 0.5, display: "block" }}
+                >
+                  Shuttle applies only to parties staying at the hotel.
+                </Typography>
+              )}
+            </Box>
+            <TextField
+              fullWidth
+              label="RSVP contact email"
+              value={editingParty?.rsvpEmail ?? ""}
+              onChange={(e) =>
+                editingParty &&
+                setEditingParty({ ...editingParty, rsvpEmail: e.target.value })
+              }
+              error={!partyEmailValid}
+              helperText={
+                !partyEmailValid
+                  ? "Enter a valid email address (or leave blank)"
+                  : "Used for the guest's edit link and the email export."
+              }
+            />
+            <Alert severity="info" sx={{ py: 0 }}>
+              Admin edits never send emails to guests or notifications to you.
+            </Alert>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setEditingParty(null)}
+            disabled={savingParty}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSaveParty}
+            variant="contained"
+            disabled={savingParty || !partyEmailValid}
+            sx={{ backgroundColor: colors.olive }}
+          >
+            {savingParty ? "Saving…" : "Save"}
           </Button>
         </DialogActions>
       </Dialog>
