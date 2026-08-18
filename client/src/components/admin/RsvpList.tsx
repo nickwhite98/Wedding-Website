@@ -360,6 +360,17 @@ export const RsvpList = () => {
 
   const csvEscape = (value: string) => `"${value.replace(/"/g, '""')}"`;
 
+  const downloadCsv = (filename: string, csv: string) => {
+    const url = URL.createObjectURL(
+      new Blob([csv], { type: "text/csv;charset=utf-8;" }),
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleDownloadEmailsCsv = () => {
     const rows = respondedWithEmail.map((inv) =>
       [
@@ -370,15 +381,50 @@ export const RsvpList = () => {
         .map(csvEscape)
         .join(","),
     );
-    const csv = ["Invitation,Guests,Email", ...rows].join("\n");
-    const url = URL.createObjectURL(
-      new Blob([csv], { type: "text/csv;charset=utf-8;" }),
+    downloadCsv(
+      "rsvp-emails.csv",
+      ["Invitation,Guests,Email", ...rows].join("\n"),
     );
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "rsvp-emails.csv";
-    link.click();
-    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadGuestListCsv = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/guests`);
+      if (!response.ok) throw new Error("Failed to fetch guests");
+      const { data } = (await response.json()) as {
+        data: (Guest & {
+          invitationId?: number | null;
+          rsvpResponse?: RsvpResponse | null;
+        })[];
+      };
+      const guests = data.filter((g) => !g.isPlusOne || g.rsvpResponse);
+      const rows = guests.map((guest) =>
+        [
+          guest.firstName,
+          guest.lastName,
+          guest.invitationId ? `No. ${guest.invitationId}` : "Unassigned",
+          guest.rsvpResponse
+            ? guest.rsvpResponse.isAttending
+              ? "Yes"
+              : "No"
+            : "No Response",
+          guest.isPlusOne ? "Yes" : "",
+          guest.dietaryRestrictions || "",
+        ]
+          .map(csvEscape)
+          .join(","),
+      );
+      downloadCsv(
+        "guest-list.csv",
+        [
+          "First Name,Last Name,Invitation,Attending,Plus One,Dietary Restrictions",
+          ...rows,
+        ].join("\n"),
+      );
+      setCopyMessage(`Exported ${guests.length} guests`);
+    } catch {
+      setCopyMessage("Couldn't export the guest list — please try again");
+    }
   };
   const hotelList = invitations.filter((inv) => inv.stayingAtHotel === true);
   const shuttleList = invitations.filter((inv) => inv.usingShuttle === true);
@@ -567,7 +613,16 @@ export const RsvpList = () => {
             disabled={rsvpEmails.length === 0}
             sx={{ borderColor: colors.olive, color: colors.olive }}
           >
-            Export CSV
+            Export Emails
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={handleDownloadGuestListCsv}
+            sx={{ borderColor: colors.olive, color: colors.olive }}
+          >
+            Export Guest List
           </Button>
         </Stack>
       </Box>

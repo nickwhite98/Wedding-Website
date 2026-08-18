@@ -18,6 +18,7 @@ const pages = [
   { name: "Venue", path: "/venue" },
   { name: "Registry", path: "/registry" },
   { name: "FAQ", path: "/faq" },
+  { name: "Photos", path: "/photos" },
   { name: "RSVP", path: "/rsvp" },
 ];
 

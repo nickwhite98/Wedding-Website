@@ -60,6 +60,17 @@ model Guest {
   @@index([lastName])
 }
 
+// Photo represents a guest-uploaded photo or video stored in R2
+model Photo {
+  id           Int      @id @default(autoincrement())
+  objectKey    String   @unique
+  thumbKey     String?
+  contentType  String
+  sizeBytes    Int
+  uploaderName String?
+  createdAt    DateTime @default(now())
+}
+
 // RsvpResponse represents the RSVP answer for a specific guest
 model RsvpResponse {
   id           Int        @id @default(autoincrement())

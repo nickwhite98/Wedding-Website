@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -16,6 +16,7 @@ import { PasswordPrompt } from "../components/PasswordPrompt";
 import { RsvpList } from "../components/admin/RsvpList";
 import { GuestListManager } from "../components/admin/GuestListManager";
 import { CsvImporter } from "../components/admin/CsvImporter";
+import { PhotoManager } from "../components/admin/PhotoManager";
 import { colors } from "../theme";
 
 interface TabPanelProps {
@@ -63,18 +64,14 @@ const useAdminTheme = () => {
 
 const AdminContent = () => {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showPasswordPrompt, setShowPasswordPrompt] = useState(true);
+  // Check if already authenticated in this session
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => sessionStorage.getItem("adminAuth") === "true",
+  );
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(
+    () => sessionStorage.getItem("adminAuth") !== "true",
+  );
   const [currentTab, setCurrentTab] = useState(0);
-
-  useEffect(() => {
-    // Check if already authenticated in this session
-    const authStatus = sessionStorage.getItem("adminAuth");
-    if (authStatus === "true") {
-      setIsAuthenticated(true);
-      setShowPasswordPrompt(false);
-    }
-  }, []);
 
   const handlePasswordSuccess = () => {
     setIsAuthenticated(true);
@@ -181,13 +178,7 @@ const AdminContent = () => {
         </TabPanel>
 
         <TabPanel value={currentTab} index={3}>
-          <Typography variant="h5" sx={{ mb: 2, color: colors.heading }}>
-            Photo Management
-          </Typography>
-          <Typography variant="body1" sx={{ color: colors.body }}>
-            Photo management coming soon... You'll be able to upload and delete
-            photos.
-          </Typography>
+          <PhotoManager />
         </TabPanel>
       </Paper>
     </Container>

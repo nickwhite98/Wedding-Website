@@ -146,6 +146,33 @@ model Guest {
 - Cascade delete: deleting an invitation removes its guests; deleting a host
   guest removes their plus-one.
 
+#### Photo
+
+A guest-uploaded photo or video stored in Cloudflare R2.
+
+```prisma
+model Photo {
+  id           Int      @id @default(autoincrement())
+  objectKey    String   @unique   // R2 key, always under uploads/
+  thumbKey     String?             // R2 key under thumbs/ (client-generated JPEG)
+  contentType  String
+  sizeBytes    Int
+  uploaderName String?
+  createdAt    DateTime @default(now())
+}
+```
+
+**Key Points**:
+
+- Files never pass through the Express server. The client requests presigned PUT
+  URLs, uploads directly to R2, then confirms; the server verifies via HeadObject
+  (≤1GB, image/* or video/* only) before recording the row.
+- Thumbnails are generated client-side (canvas) and uploaded alongside; missing
+  thumbnails are fine (gallery shows a placeholder for videos).
+- Viewing uses presigned GET URLs (6h expiry) — the bucket stays fully private.
+- R2 client config: `/server/src/config/r2.ts`. One-time bucket CORS setup:
+  `npx tsx scripts/setupR2Cors.ts` (requires an R2 token with Admin Read & Write).
+
 #### RsvpResponse
 
 The RSVP answer for a specific guest.
@@ -228,6 +255,13 @@ All routes are mounted under `/api` (`server/src/index.ts`).
 
 - `POST /guests`, `GET /unassigned`, `POST /assign-invitation`
 
+### Photos (`/api/photos`) — rate-limited
+
+- `POST /presign` — validate file meta, return presigned R2 PUT URLs (file + optional thumb)
+- `POST /confirm` — verify the object landed in R2, record the `Photo` row
+- `GET  /` — list photos with presigned GET URLs for gallery display
+- `DELETE /admin/:id` — admin delete (removes R2 objects + row)
+
 > The `/admin/*` and management routes are **not** protected server-side — the
 > admin panel is gated client-side only. Do not expose this server publicly without
 > adding real auth.
@@ -291,6 +325,7 @@ The admin panel (`/client/src/pages/Admin.tsx`) is tabbed:
   hotel answer, inline edit/delete.
 - **Guest List** — `components/admin/GuestListManager.tsx`: invitation/guest CRUD.
 - **CSV Import** — `components/admin/CsvImporter.tsx`: bulk guest import.
+- **Photos** — `components/admin/PhotoManager.tsx`: list/delete guest uploads.
 
 ---
 
@@ -336,8 +371,8 @@ client/
 └── .env                     # VITE_ADMIN_PASSWORD, VITE_API_URL
 ```
 
-**Routes** (`App.tsx`): `/`, `/travel`, `/venue`, `/registry`, `/faq` (in nav);
-`/story`, `/details`, `/rsvp`, `/rsvp/edit`, `/photos`, `/admin` (accessible but
+**Routes** (`App.tsx`): `/`, `/travel`, `/venue`, `/registry`, `/faq`, `/photos`,
+`/rsvp` (in nav); `/story`, `/details`, `/rsvp/edit`, `/admin` (accessible but
 not in nav).
 
 ### Backend (`/server`)
@@ -384,6 +419,10 @@ Referenced in code:
 - `RESEND_FROM_EMAIL` — sender address (default `onboarding@resend.dev`)
 - `RSVP_NOTIFICATION_EMAIL` — admin notification recipient
 - `RSVP_NOTIFICATION_CC` — comma-separated CC list
+- `R2_ENDPOINT` — R2 S3 endpoint (`https://<account-id>.r2.cloudflarestorage.com`)
+- `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` — R2 API token credentials (Object Read & Write)
+- `R2_BUCKET` — bucket name (default `wedding-photos`)
+- `R2_ACCOUNT_ID` — Cloudflare account id (informational)
 
 ### Frontend (`/client/.env`)
 
