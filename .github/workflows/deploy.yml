@@ -84,6 +84,10 @@ jobs:
           RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
           RESEND_FROM_EMAIL=${{ vars.RESEND_FROM_EMAIL }}
           RSVP_NOTIFICATION_EMAIL=${{ vars.RSVP_NOTIFICATION_EMAIL }}
+          R2_ENDPOINT=${{ vars.R2_ENDPOINT }}
+          R2_ACCESS_KEY_ID=${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY=${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET=${{ vars.R2_BUCKET || 'wedding-photos' }}
           EOF
 
       - name: Create deployment package
